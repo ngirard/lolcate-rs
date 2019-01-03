@@ -57,5 +57,15 @@ fn main() -> std::io::Result<()> {
         eprintln!("Please edit file {:?} and add at least a directory to scan.", default_config_file);
         process::exit(1);
     }
+    for dir in config.dirs {
+        if !dir.exists() {
+            eprintln!("The specified dir {:?} doesn't exist.", dir);
+            process::exit(1);
+        }
+        if !dir.is_dir() {
+            eprintln!("The specified path {:?} is not a directory or cannot be accessed.", dir);
+            process::exit(1);
+        }
+    }
     Ok(())
 }
