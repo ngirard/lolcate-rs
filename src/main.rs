@@ -2,6 +2,7 @@ extern crate dirs;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+extern crate lz4;
 
 use std::path::PathBuf;
 use std::fs;
@@ -13,6 +14,7 @@ mod config;
 use crate::config::read_toml_file;
 use crate::config::Config;
 use walkdir::WalkDir;
+use lz4::{EncoderBuilder};
 
 static DEFAULT_PROJECT_TEMPLATE : &str = r#"
 # Dirs to add
@@ -69,11 +71,22 @@ fn main() -> std::io::Result<()> {
         }
     }
     
+    let mut db_fn = lolcate_path();
+    db_fn.push("db.lz4");
+    let output_file = File::create(db_fn)?;
+    let mut encoder = EncoderBuilder::new()
+        .level(4)
+        .build(output_file)?;
+    
     for dir in &config.dirs {
         for entry in WalkDir::new(dir.to_str().unwrap()) {
             let entry = entry.unwrap();
-            println!("{}", entry.path().display());
+            //encoder.write(entry.path().to_str().unwrap().as_bytes())?;
+            writeln!(encoder, "{}", entry.path().to_str().unwrap())?;
         }
     }
-    Ok(())
+    
+    let (_output, result) = encoder.finish();
+    result
+    //Ok(())
 }
