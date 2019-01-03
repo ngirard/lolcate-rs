@@ -16,8 +16,8 @@ use crate::config::Config;
 static DEFAULT_PROJECT_TEMPLATE : &str = r#"
 # Dirs to add
 dirs = [
-  # /first/dir,
-  # /second/DIR
+  # "/first/dir",
+  # "/second/DIR"
 ]
 
 [ignore]
@@ -44,8 +44,15 @@ fn main() -> std::io::Result<()> {
     }
     
     let mut buffer = String::new();
-    let config: Config = read_toml_file(&default_config_file, &mut buffer)
-        .expect("Something went wrong");
+    let config: Config = match read_toml_file(&default_config_file, &mut buffer) {
+        Ok(config) => {
+            config
+        }
+        Err(error) => {
+            println!("Invalid TOML: {}", error);
+            process::exit(1 );
+        }
+    };
     if config.dirs.len() == 0 {
         println!("Please edit file {:?} and add at least a directory to scan.", default_config_file);
         process::exit(1);
