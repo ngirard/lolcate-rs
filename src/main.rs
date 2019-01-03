@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::process;
 
 static DEFAULT_PROJECT_TEMPLATE : &str = r#"
 [dirs]
@@ -29,6 +30,7 @@ fn main() -> std::io::Result<()> {
         let mut f = File::create(&default_config_file)?;
         f.write_all(DEFAULT_PROJECT_TEMPLATE.as_bytes())?;
         println!("Added default database.\nPlease edit {:?}.", default_config_file);
+        process::exit(0);
     }
     Ok(())
 }
