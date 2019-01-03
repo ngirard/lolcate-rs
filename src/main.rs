@@ -49,12 +49,12 @@ fn main() -> std::io::Result<()> {
             config
         }
         Err(error) => {
-            println!("Invalid TOML: {}", error);
-            process::exit(1 );
+            eprintln!("Invalid TOML: {}", error);
+            process::exit(1);
         }
     };
     if config.dirs.len() == 0 {
-        println!("Please edit file {:?} and add at least a directory to scan.", default_config_file);
+        eprintln!("Please edit file {:?} and add at least a directory to scan.", default_config_file);
         process::exit(1);
     }
     Ok(())
