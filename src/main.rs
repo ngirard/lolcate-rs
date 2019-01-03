@@ -12,6 +12,7 @@ use std::process;
 mod config;
 use crate::config::read_toml_file;
 use crate::config::Config;
+use walkdir::WalkDir;
 
 static DEFAULT_PROJECT_TEMPLATE : &str = r#"
 # Dirs to add
@@ -57,7 +58,7 @@ fn main() -> std::io::Result<()> {
         eprintln!("Please edit file {:?} and add at least a directory to scan.", default_config_file);
         process::exit(1);
     }
-    for dir in config.dirs {
+    for dir in &config.dirs {
         if !dir.exists() {
             eprintln!("The specified dir {:?} doesn't exist.", dir);
             process::exit(1);
@@ -65,6 +66,13 @@ fn main() -> std::io::Result<()> {
         if !dir.is_dir() {
             eprintln!("The specified path {:?} is not a directory or cannot be accessed.", dir);
             process::exit(1);
+        }
+    }
+    
+    for dir in &config.dirs {
+        for entry in WalkDir::new(dir.to_str().unwrap()) {
+            let entry = entry.unwrap();
+            println!("{}", entry.path().display());
         }
     }
     Ok(())
