@@ -7,6 +7,7 @@ pub struct Config {
     pub dirs: Vec<path::PathBuf>,
     pub include_dirs: bool,
     pub ignore_symlinks: bool,
+    pub ignore_hidden: bool,
 }
 
 pub fn read_toml_file<'a, 'de, P: ?Sized, T>(path: &'a P, buffer: &'de mut String) -> Result<T, Error>

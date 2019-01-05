@@ -40,6 +40,8 @@ include_dirs = false
 # Set to true if you want skip symbolic links
 ignore_symlinks = false
 
+# Set to true if you want to index hidden files and directories
+ignore_hidden = false
 "#;
 
 static PROJECT_IGNORE_TEMPLATE : &str = r#"
@@ -128,7 +130,7 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
 pub fn walker(config: &Config, database: &str) -> ignore::Walk {
     let paths = &config.dirs;
     let mut wd = ignore::WalkBuilder::new(&paths[0]);
-    wd.hidden(false)      // Don't ignore hidden files
+    wd.hidden(config.ignore_hidden) // Whether to ignore hidden files
       .parents(false)     // Don't read ignore files from parent directories
       .follow_links(true) // Follow symbolic links
       .ignore(true)       // Don't read .ignore files
