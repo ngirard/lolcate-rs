@@ -4,6 +4,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate lz4;
 extern crate ignore;
+extern crate walkdir;
 
 use std::path::PathBuf;
 use std::fs;
@@ -28,6 +29,8 @@ use regex::Regex;
 
 
 static PROJECT_CONFIG_TEMPLATE : &str = r#"
+description = ""
+
 # Dirs to add.
 dirs = [
   # "/first/dir",
@@ -47,7 +50,10 @@ ignore_hidden = false
 static PROJECT_IGNORE_TEMPLATE : &str = r#"
 # Dirs / files to ignore.
 # Use the same syntax as gitignore(5).
-
+# Common patterns:
+#
+# .git
+# *~
 "#;
 
 pub fn lolcate_path() -> PathBuf {
@@ -125,6 +131,23 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
     
     println!("Added database '{}'.\nPlease edit file {:?}.", db_name, config_fn);
     process::exit(0);
+}
+
+fn list() -> std::io::Result<()> {
+    let mut data: Vec<(String,String)> = Vec::new();
+    let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
+    for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
+        if let Some(db_name) = entry.unwrap().file_name().to_str(){
+            let config_fn = config_fn(&db_name);
+            let config = get_config(&config_fn);
+            let description = config.description;
+            data.push((db_name.to_string(), description.to_string()));
+        }
+    }
+    for (name, desc) in data {
+        println!("{:width$}\t{}", name, desc, width=10);
+    }
+    Ok(())
 }
 
 pub fn walker(config: &Config, database: &str) -> ignore::Walk {
@@ -210,6 +233,11 @@ fn main() -> std::io::Result<()> {
     
     if args.is_present("update") {
         update_database(&database)?;
+        process::exit(0);
+    }
+    
+    if args.is_present("list") {
+        list()?;
         process::exit(0);
     }
     

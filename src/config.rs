@@ -4,6 +4,7 @@ use toml::macros::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    pub description: String,
     pub dirs: Vec<path::PathBuf>,
     pub include_dirs: bool,
     pub ignore_symlinks: bool,
