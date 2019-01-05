@@ -5,7 +5,8 @@ use toml::macros::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub dirs: Vec<path::PathBuf>,
-    pub ignore: Vec<path::PathBuf>,
+    pub include_dirs: bool,
+    pub ignore_symlinks: bool,
 }
 
 pub fn read_toml_file<'a, 'de, P: ?Sized, T>(path: &'a P, buffer: &'de mut String) -> Result<T, Error>

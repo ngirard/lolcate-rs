@@ -34,6 +34,12 @@ dirs = [
   # "/second/dir"
 ]
 
+# Set to true if you want to index directories
+include_dirs = false
+
+# Set to true if you want skip symbolic links
+ignore_symlinks = false
+
 "#;
 
 static PROJECT_IGNORE_TEMPLATE : &str = r#"
@@ -144,6 +150,8 @@ fn update_database(database: &str) -> std::io::Result<()> {
         process::exit(1);
     }
     let config = get_config(&config_fn);
+    let include_dirs = config.include_dirs;
+    let ignore_symlinks = config.ignore_symlinks;
     
     let output_fn = fs::File::create(db_fn(&database))?;
     let mut encoder = EncoderBuilder::new()
@@ -153,6 +161,18 @@ fn update_database(database: &str) -> std::io::Result<()> {
     println!("Updating {}...", database);
     for entry in walker(&config, &database) {
         let entry = entry.unwrap();
+        if !include_dirs || ignore_symlinks {
+            if let Some(ft) = entry.file_type() {
+                if !include_dirs && ft.is_dir() {
+                    continue;
+                }
+                if ignore_symlinks && ft.is_symlink() {
+                    continue;
+                }
+            } else {
+                continue; // entry is stdin
+            }
+        }
         writeln!(encoder, "{}", entry.path().to_str().unwrap())?;
     }
     
