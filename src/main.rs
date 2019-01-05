@@ -133,7 +133,19 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
     process::exit(0);
 }
 
-fn list() -> std::io::Result<()> {
+fn database_names(path: PathBuf) -> Vec<(String)> {
+    let mut _dbs: Vec<(String)> = Vec::new();
+    let walker = walkdir::WalkDir::new(path).min_depth(1).into_iter();
+    for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
+        if let Some(db_name) = entry.unwrap().file_name().to_str(){
+            _dbs.push(db_name.to_string());
+        }
+    }
+    _dbs
+}
+
+
+fn list_databases() -> std::io::Result<()> {
     let mut data: Vec<(String,String)> = Vec::new();
     let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
@@ -166,6 +178,13 @@ pub fn walker(config: &Config, database: &str) -> ignore::Walk {
     }
     wd.add_ignore(ignores_fn(&database));    
     wd.build()
+}
+
+fn update_databases(databases: Vec<(String)>) -> std::io::Result<()> {
+    for db in databases {
+        update_database(&db)?;
+    }
+    Ok(())
 }
 
 fn update_database(database: &str) -> std::io::Result<()> {
@@ -205,7 +224,14 @@ fn update_database(database: &str) -> std::io::Result<()> {
     result
 }
 
-fn db_lookup(database: &str, pattern: &str) -> std::io::Result<()> {
+fn lookup_databases(databases: Vec<(String)>, pattern: &str) -> std::io::Result<()> {
+    for db in databases {
+        lookup_database(&db, &pattern)?;
+    }
+    Ok(())
+}
+
+fn lookup_database(database: &str, pattern: &str) -> std::io::Result<()> {
     let input_file = fs::File::open(db_fn(&database))?;
     let decoder = lz4::Decoder::new(input_file)?;
     let reader = io::BufReader::new(decoder);    
@@ -223,8 +249,11 @@ fn db_lookup(database: &str, pattern: &str) -> std::io::Result<()> {
 fn main() -> std::io::Result<()> {
     let app = cli::build_cli();
     let args = app.get_matches();
-    
     let database = args.value_of("database").unwrap();
+    let databases: Vec<(String)> = match args.is_present("all") {
+        true => database_names(lolcate_path()),
+        false => vec![ database.to_string() ],
+    };
     
     if args.is_present("create") {
         create_database(&database)?;
@@ -232,18 +261,17 @@ fn main() -> std::io::Result<()> {
     }
     
     if args.is_present("update") {
-        update_database(&database)?;
+        update_databases(databases)?;
         process::exit(0);
     }
     
     if args.is_present("list") {
-        list()?;
+        list_databases()?;
         process::exit(0);
     }
     
     if let Some(pattern) = args.value_of("pattern") {
-        //println!("Lookup: {}", pattern);
-        db_lookup(&database, &pattern)?;
+        lookup_databases(databases, &pattern)?;
         process::exit(0);
     }
         
