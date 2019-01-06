@@ -13,11 +13,11 @@ use std::io;
 use std::io::prelude::*;
 use std::process;
 use std::str;
+use std::collections::HashMap;
 
 mod config;
 mod cli;
 use crate::config::read_toml_file;
-use crate::config::Config;
 use lz4::{EncoderBuilder};
 
 
@@ -26,7 +26,15 @@ extern crate regex;
 
 use regex::Regex;
 
+static GLOBAL_CONFIG_TEMPLATE : &str = r#"[types]
+# Definition of custom file types
+# Examples:
+# img = ".*\\.(jp.?g|png|gif|JP.?G)$"
+# video = ".*\\.(flv|mp4|mp.?g|avi|wmv|mkv|3gp|m4v|asf|webm)$"
+# doc = ".*\\.(pdf|chm|epub|djvu?|mobi|azw3)$"
+# audio = ".*\\.(mp3|m4a|flac|ogg)$"
 
+"#;
 
 static PROJECT_CONFIG_TEMPLATE : &str = r#"
 description = ""
@@ -45,10 +53,10 @@ ignore_symlinks = false
 
 # Set to true if you want to index hidden files and directories
 ignore_hidden = false
+
 "#;
 
-static PROJECT_IGNORE_TEMPLATE : &str = r#"
-# Dirs / files to ignore.
+static PROJECT_IGNORE_TEMPLATE : &str = r#"# Dirs / files to ignore.
 # Use the same syntax as gitignore(5).
 # Common patterns:
 #
@@ -62,9 +70,9 @@ pub fn lolcate_path() -> PathBuf {
     path
 }
 
-fn get_config(toml_file: &PathBuf) -> Config {
+fn get_db_config(toml_file: &PathBuf) -> config::Config {
     let mut buffer = String::new();
-    let config: Config = match read_toml_file(&toml_file, &mut buffer) {
+    let config: config::Config = match read_toml_file(&toml_file, &mut buffer) {
         Ok(config) => {
             config
         }
@@ -73,7 +81,41 @@ fn get_config(toml_file: &PathBuf) -> Config {
             process::exit(1);
         }
     };
-    
+    config
+}
+
+fn create_global_config_if_needed() -> std::io::Result<()> {
+    let _fn = global_config_fn();
+    if !_fn.exists() {
+        fs::create_dir_all(_fn.parent().unwrap())?;
+        let mut f = fs::File::create(&_fn)?;
+        f.write_all(GLOBAL_CONFIG_TEMPLATE.as_bytes())?;
+        println!("Created configuration file {}", _fn.display());
+    }
+    Ok(())
+}
+
+fn get_global_config(toml_file: &PathBuf) -> config::GlobalConfig {
+    let mut buffer = String::new();
+    let config: config::GlobalConfig = match read_toml_file(&toml_file, &mut buffer) {
+        Ok(config) => {
+            config
+        }
+        Err(error) => {
+            eprintln!("Invalid TOML: {}", error);
+            process::exit(1);
+        }
+    };
+    config
+}
+
+fn get_types_map() -> HashMap<String, String> {
+    let _fn = global_config_fn();
+    let _config = get_global_config(&_fn);
+    _config.types
+}
+
+fn check_db_config(config: &config::Config, toml_file: &PathBuf) {
     // Check config
     if config.dirs.len() == 0 {
         eprintln!("Please edit file {:?} and add at least a directory to scan.", toml_file);
@@ -81,15 +123,20 @@ fn get_config(toml_file: &PathBuf) -> Config {
     }
     for dir in &config.dirs {
         if !dir.exists() {
-            eprintln!("The specified dir {:?} doesn't exist.", dir);
+            eprintln!("The specified dir {} doesn't exist.", dir.display());
             process::exit(1);
         }
         if !dir.is_dir() {
-            eprintln!("The specified path {:?} is not a directory or cannot be accessed.", dir);
+            eprintln!("The specified path {} is not a directory or cannot be accessed.", dir.display());
             process::exit(1);
         }
     }
-    config
+}
+
+fn global_config_fn() -> PathBuf {
+    let mut _fn = lolcate_path();
+    _fn.push("config.toml");
+    _fn
 }
 
 fn config_fn(db_name: &str) -> PathBuf {
@@ -151,7 +198,7 @@ fn list_databases() -> std::io::Result<()> {
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
         if let Some(db_name) = entry.unwrap().file_name().to_str(){
             let config_fn = config_fn(&db_name);
-            let config = get_config(&config_fn);
+            let config = get_db_config(&config_fn);
             let description = config.description;
             data.push((db_name.to_string(), description.to_string()));
         }
@@ -162,7 +209,7 @@ fn list_databases() -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn walker(config: &Config, database: &str) -> ignore::Walk {
+pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
     let paths = &config.dirs;
     let mut wd = ignore::WalkBuilder::new(&paths[0]);
     wd.hidden(config.ignore_hidden) // Whether to ignore hidden files
@@ -187,13 +234,15 @@ fn update_databases(databases: Vec<(String)>) -> std::io::Result<()> {
     Ok(())
 }
 
+
 fn update_database(database: &str) -> std::io::Result<()> {
     let config_fn = config_fn(&database);
     if !config_fn.exists() {
         eprintln!("Config file not found for database {}.\nPerhaps you forgot to type lolcate --create {} ?", &database, &database);
         process::exit(1);
     }
-    let config = get_config(&config_fn);
+    let config = get_db_config(&config_fn);
+    check_db_config(&config, &config_fn);
     let include_dirs = config.include_dirs;
     let ignore_symlinks = config.ignore_symlinks;
     
@@ -204,7 +253,13 @@ fn update_database(database: &str) -> std::io::Result<()> {
     
     println!("Updating {}...", database);
     for entry in walker(&config, &database) {
-        let entry = entry.unwrap();
+        let entry = match entry {
+            Ok(_entry) => _entry,
+            Err(err) => {
+                eprintln!("failed to access entry ({})", err);
+                continue;
+            }
+        };
         if !include_dirs || ignore_symlinks {
             if let Some(ft) = entry.file_type() {
                 if !include_dirs && ft.is_dir() {
@@ -217,29 +272,32 @@ fn update_database(database: &str) -> std::io::Result<()> {
                 continue; // entry is stdin
             }
         }
-        writeln!(encoder, "{}", entry.path().to_str().unwrap())?;
+        match entry.path().to_str() {
+            Some(s) => { writeln!(encoder, "{}", s)?; },
+            _ => { eprintln!("File name contains invalid unicode: {:?}", entry.path()) },
+        }
     }
     
     let (_output, result) = encoder.finish();
     result
 }
 
-fn lookup_databases(databases: Vec<(String)>, pattern: &str) -> std::io::Result<()> {
+fn lookup_databases(databases: Vec<(String)>, pattern_re: &Regex, type_re: &Regex) -> std::io::Result<()> {
     for db in databases {
-        lookup_database(&db, &pattern)?;
+        lookup_database(&db, &pattern_re, &type_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(database: &str, pattern: &str) -> std::io::Result<()> {
+fn lookup_database(database: &str, pattern_re: &Regex, type_re: &Regex) -> std::io::Result<()> {
     let input_file = fs::File::open(db_fn(&database))?;
     let decoder = lz4::Decoder::new(input_file)?;
     let reader = io::BufReader::new(decoder);    
-    let re: Regex = Regex::new(pattern).unwrap();
+    //let re: Regex = Regex::new(pattern).unwrap();
     
     for _line in reader.lines() {
         let line = _line.unwrap();
-        if re.is_match(&line) {
+        if pattern_re.is_match(&line) && type_re.is_match(&line) {
             println!("{}", &line);
         }
     }
@@ -249,12 +307,15 @@ fn lookup_database(database: &str, pattern: &str) -> std::io::Result<()> {
 fn main() -> std::io::Result<()> {
     let app = cli::build_cli();
     let args = app.get_matches();
+    
+    create_global_config_if_needed()?;
+    
     let database = args.value_of("database").unwrap();
     let databases: Vec<(String)> = match args.is_present("all") {
         true => database_names(lolcate_path()),
         false => vec![ database.to_string() ],
     };
-    
+        
     if args.is_present("create") {
         create_database(&database)?;
         process::exit(0);
@@ -269,11 +330,29 @@ fn main() -> std::io::Result<()> {
         list_databases()?;
         process::exit(0);
     }
-    
-    if let Some(pattern) = args.value_of("pattern") {
-        lookup_databases(databases, &pattern)?;
+
+    if args.is_present("type") || args.is_present("pattern") {
+        let type_re: Option<String> = match args.is_present("type") {
+            false => None,
+            true => {
+                let type_names: Vec<&str> = args.value_of("type").unwrap().split(",").collect();
+                let types_map = get_types_map();
+                let type_name = type_names[0];
+                match types_map.get(type_name) {
+                    Some(st) => Some(st.to_string()),
+                    _ => None}}};
+
+        let type_re = match type_re {
+            Some(t) => Regex::new(&t).unwrap(),
+            _ => Regex::new(".").unwrap() };    
+        
+        let pattern_re = match args.value_of("pattern") {
+            Some(t) => Regex::new(&t).unwrap(),
+            _ => Regex::new(".").unwrap() };
+            
+        lookup_databases(databases, &pattern_re, &type_re)?;
         process::exit(0);
     }
-        
+    
     Ok(())
 }
