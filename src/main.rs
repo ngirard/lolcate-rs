@@ -25,8 +25,7 @@ use lz4::{EncoderBuilder};
 
 //#[macro_use] extern crate lazy_static;
 extern crate regex;
-
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 
 static GLOBAL_CONFIG_TEMPLATE : &str = r#"[types]
 # Definition of custom file types
@@ -325,6 +324,21 @@ fn update_database(database: &str) -> std::io::Result<()> {
     result
 }
 
+fn build_regex(pattern: &str, ignore_case: bool) -> Regex {
+    let upper_re = Regex::new(r"[[:upper:]]").unwrap();
+    let re: Regex = match RegexBuilder::new(pattern)
+        .case_insensitive(ignore_case || !upper_re.is_match(&pattern))
+        .build() {
+            Ok(re) => {
+                re
+            }
+            Err(error) => {
+                eprintln!("Invalid regex: {}", error);
+                process::exit(1);
+            }};
+    re
+}
+
 fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>) -> std::io::Result<()> {
     for db in databases {
         lookup_database(&db, patterns_re, &types_re)?;
@@ -400,7 +414,7 @@ fn main() -> std::io::Result<()> {
         let patterns = args.values_of("pattern").map(|vals| vals.collect::<Vec<_>>());
         let patterns_re = match patterns {
             None => vec![ Regex::new(".").unwrap() ],
-            Some(patterns) => patterns.into_iter().map(|p| Regex::new(&p).unwrap()).collect() };
+            Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
         
         lookup_databases(databases, &patterns_re, &types_re)?;
         process::exit(0);
