@@ -192,7 +192,7 @@ fn database_names(path: PathBuf) -> Vec<(String)> {
 
 
 fn list_databases() -> std::io::Result<()> {
-    let mut db_data: Vec<(String,String)> = Vec::new();
+    let mut db_data: Vec<(String, String, String)> = Vec::new();
     let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
     println!("Config file:\n  {}\n", global_config_fn().display());
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
