@@ -90,7 +90,6 @@ fn create_global_config_if_needed() -> std::io::Result<()> {
         fs::create_dir_all(_fn.parent().unwrap())?;
         let mut f = fs::File::create(&_fn)?;
         f.write_all(GLOBAL_CONFIG_TEMPLATE.as_bytes())?;
-        println!("Created configuration file {}", _fn.display());
     }
     Ok(())
 }
@@ -193,19 +192,26 @@ fn database_names(path: PathBuf) -> Vec<(String)> {
 
 
 fn list_databases() -> std::io::Result<()> {
-    let mut data: Vec<(String,String)> = Vec::new();
+    let mut db_data: Vec<(String,String)> = Vec::new();
     let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
+    println!("Configuration file:\n  {}\n", global_config_fn().display());
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
         if let Some(db_name) = entry.unwrap().file_name().to_str(){
             let config_fn = config_fn(&db_name);
             let config = get_db_config(&config_fn);
             let description = config.description;
-            data.push((db_name.to_string(), description.to_string()));
+            db_data.push((db_name.to_string(), description.to_string()));
         }
     }
-    for (name, desc) in data {
-        println!("{:width$}\t{}", name, desc, width=10);
-    }
+    match db_data.len() {
+        0 => { println!("No database found.") },
+        _ => {
+            println!("Databases:");
+            for (name, desc) in db_data {
+                println!("  {:width$}\t{}", name, desc, width=10);
+            }
+        }
+    };
     Ok(())
 }
 
