@@ -204,7 +204,7 @@ fn list_databases() -> std::io::Result<()> {
         }
     }
     match db_data.len() {
-        0 => { println!("No database found.") },
+        0 => { println!("No databases found.") },
         _ => {
             println!("Databases:");
             for (name, desc, config_fn) in db_data {
@@ -214,6 +214,16 @@ fn list_databases() -> std::io::Result<()> {
             }
         }
     };
+    let tm = get_types_map();
+    match tm.len() {
+        0 => { println!("\nNo file types found.\n") },
+        _ => {
+            println!("\nFile types:");
+            for (name, glob) in tm {
+                println!("  {}: {}", name, glob);
+            }
+            println!("");
+        }};
     Ok(())
 }
 

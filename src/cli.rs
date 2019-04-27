@@ -34,7 +34,7 @@ pub fn build_cli() -> App<'static, 'static> {
             .required(false)
             .default_value("default"))
         .arg(Arg::with_name("type")
-            .help("One or several types to search, separated with commas")
+            .help("One or several file types to search, separated with commas")
             .long("type")
             .takes_value(true)
             .required(false))
