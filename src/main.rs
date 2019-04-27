@@ -194,21 +194,23 @@ fn database_names(path: PathBuf) -> Vec<(String)> {
 fn list_databases() -> std::io::Result<()> {
     let mut db_data: Vec<(String,String)> = Vec::new();
     let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
-    println!("Configuration file:\n  {}\n", global_config_fn().display());
+    println!("Config file:\n  {}\n", global_config_fn().display());
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
         if let Some(db_name) = entry.unwrap().file_name().to_str(){
             let config_fn = config_fn(&db_name);
             let config = get_db_config(&config_fn);
             let description = config.description;
-            db_data.push((db_name.to_string(), description.to_string()));
+            db_data.push((db_name.to_string(), description.to_string(), config_fn.display().to_string()));
         }
     }
     match db_data.len() {
         0 => { println!("No database found.") },
         _ => {
             println!("Databases:");
-            for (name, desc) in db_data {
-                println!("  {:width$}\t{}", name, desc, width=10);
+            for (name, desc, config_fn) in db_data {
+                println!("  {}", name);
+                println!("    Description: {}", desc);
+                println!("    Config file: {}", config_fn);
             }
         }
     };
@@ -275,7 +277,7 @@ fn update_database(database: &str) -> std::io::Result<()> {
                     continue;
                 }
             } else {
-                continue; // entry is stdin
+                continue;
             }
         }
         match entry.path().to_str() {
