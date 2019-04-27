@@ -14,6 +14,7 @@ clap = "2"
 regex = "1"
 ignore = "0.4"
 walkdir = "2"
+termcolor = "1"
 
 [[bin]]
 path = "src/main.rs"

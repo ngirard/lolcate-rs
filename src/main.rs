@@ -5,6 +5,7 @@ extern crate serde;
 extern crate lz4;
 extern crate ignore;
 extern crate walkdir;
+extern crate termcolor;
 
 use std::path::PathBuf;
 use std::fs;
@@ -14,6 +15,7 @@ use std::io::prelude::*;
 use std::process;
 use std::str;
 use std::collections::HashMap;
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 mod config;
 mod cli;
@@ -194,7 +196,15 @@ fn database_names(path: PathBuf) -> Vec<(String)> {
 fn info_databases() -> std::io::Result<()> {
     let mut db_data: Vec<(String, String, String)> = Vec::new();
     let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
-    println!("Config file:\n  {}\n", global_config_fn().display());
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
+    let mut section_spec = ColorSpec::new();
+    section_spec.set_fg(Some(Color::Cyan));
+    let mut entry_spec = ColorSpec::new();
+    entry_spec.set_fg(Some(Color::Green));
+    stdout.set_color(&section_spec)?;
+    writeln!(&mut stdout, "Config file:")?;
+    stdout.reset()?;
+    writeln!(&mut stdout, "  {}\n", global_config_fn().display())?;
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
         if let Some(db_name) = entry.unwrap().file_name().to_str(){
             let config_fn = config_fn(&db_name);
@@ -203,27 +213,42 @@ fn info_databases() -> std::io::Result<()> {
             db_data.push((db_name.to_string(), description.to_string(), config_fn.display().to_string()));
         }
     }
+    stdout.set_color(&section_spec)?;
     match db_data.len() {
-        0 => { println!("No databases found.") },
+        0 => {
+            writeln!(&mut stdout, "No databases found.")?;
+        },
         _ => {
-            println!("Databases:");
+            writeln!(&mut stdout, "Databases:")?;
+            stdout.reset()?;
             for (name, desc, config_fn) in db_data {
-                println!("  {}", name);
+                stdout.set_color(&entry_spec)?;
+                writeln!(&mut stdout, "  {}", name)?;
+                stdout.reset()?;
                 println!("    Description: {}", desc);
                 println!("    Config file: {}", config_fn);
             }
         }
     };
     let tm = get_types_map();
+    stdout.set_color(&section_spec)?;
+    println!("");
     match tm.len() {
-        0 => { println!("\nNo file types found.\n") },
+        0 => {
+            writeln!(&mut stdout, "No file types found.")?;
+        },
         _ => {
-            println!("\nFile types:");
+            writeln!(&mut stdout, "File types:")?;
+            stdout.reset()?;
             for (name, glob) in tm {
-                println!("  {}: {}", name, glob);
+                stdout.set_color(&entry_spec)?;
+                write!(&mut stdout, "  {}", name)?;
+                stdout.reset()?;
+                println!(": {}", glob);
             }
-            println!("");
         }};
+    stdout.reset()?;
+    println!("");
     Ok(())
 }
 
