@@ -290,21 +290,27 @@ fn update_database(database: &str) -> std::io::Result<()> {
     result
 }
 
-fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, type_re: &Regex) -> std::io::Result<()> {
+fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>) -> std::io::Result<()> {
     for db in databases {
-        lookup_database(&db, patterns_re, &type_re)?;
+        lookup_database(&db, patterns_re, &types_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, type_re: &Regex) -> std::io::Result<()> {
+fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>) -> std::io::Result<()> {
     let input_file = fs::File::open(db_fn(&database))?;
     let decoder = lz4::Decoder::new(input_file)?;
-    let reader = io::BufReader::new(decoder);    
+    let reader = io::BufReader::new(decoder);
     for _line in reader.lines() {
         let line = _line.unwrap();
-        if !type_re.is_match(&line) { continue };
         let mut matched = false;
+        if types_re.len()>0 {
+            for type_re in types_re {
+                if type_re.is_match(&line) { matched = true; break };
+            }
+            if !matched { continue };
+        }
+        matched = false;
         for re in patterns_re {
             match re.is_match(&line) {
                 false => { matched = false; break },
@@ -346,27 +352,22 @@ fn main() -> std::io::Result<()> {
     }
 
     if args.is_present("type") || args.is_present("pattern") {
-        let type_re: Option<String> = match args.is_present("type") {
-            false => None,
-            true => {
-                let type_names: Vec<&str> = args.value_of("type").unwrap().split(",").collect();
+        let types_re: Vec<(regex::Regex)> = match args.value_of("type") {
+            None => vec![],
+            Some(vals) => {
                 let types_map = get_types_map();
-                let type_name = type_names[0];
-                match types_map.get(type_name) {
-                    Some(st) => Some(st.to_string()),
-                    _ => None}}};
-
-        let type_re = match type_re {
-            Some(t) => Regex::new(&t).unwrap(),
-            _ => Regex::new(".").unwrap() };    
+                vals.split(",").map(|n| types_map.get(n))
+                    .filter(|t| t.is_some())
+                    .map(|t| t.unwrap())
+                    .map(|t| Regex::new(&t).unwrap())
+                    .collect()
+            }};
+        let patterns = args.values_of("pattern").map(|vals| vals.collect::<Vec<_>>());
+        let patterns_re = match patterns {
+            None => vec![ Regex::new(".").unwrap() ],
+            Some(patterns) => patterns.into_iter().map(|p| Regex::new(&p).unwrap()).collect() };
         
-        let patterns = args.values_of("pattern").unwrap().collect::<Vec<_>>();
-        
-        let patterns_re = match patterns.len() {
-            0 => vec![ Regex::new(".").unwrap() ],
-            _ => patterns.into_iter().map(|p| Regex::new(&p).unwrap()).collect() };
-        
-        lookup_databases(databases, &patterns_re, &type_re)?;
+        lookup_databases(databases, &patterns_re, &types_re)?;
         process::exit(0);
     }
     
