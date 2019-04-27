@@ -23,7 +23,7 @@ use crate::config::read_toml_file;
 use lz4::{EncoderBuilder};
 
 
-//#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate lazy_static;
 extern crate regex;
 use regex::{Regex, RegexBuilder};
 
@@ -325,9 +325,11 @@ fn update_database(database: &str) -> std::io::Result<()> {
 }
 
 fn build_regex(pattern: &str, ignore_case: bool) -> Regex {
-    let upper_re = Regex::new(r"[[:upper:]]").unwrap();
+    lazy_static! {
+        static ref UPPER_RE: Regex = Regex::new(r"[[:upper:]]").unwrap();
+    };
     let re: Regex = match RegexBuilder::new(pattern)
-        .case_insensitive(ignore_case || !upper_re.is_match(&pattern))
+        .case_insensitive(ignore_case || !UPPER_RE.is_match(&pattern))
         .build() {
             Ok(re) => {
                 re
