@@ -66,7 +66,7 @@ static PROJECT_IGNORE_TEMPLATE : &str = r#"# Dirs / files to ignore.
 
 pub fn lolcate_path() -> PathBuf {
     let mut path = dirs::data_local_dir().unwrap();
-    path.push("lolcate-rs");
+    path.push("lolcate");
     path
 }
 
