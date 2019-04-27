@@ -47,5 +47,6 @@ pub fn build_cli() -> App<'static, 'static> {
             )
         .arg(Arg::with_name("pattern")
             .value_name("PATTERN")
-            .index(1))
+            .min_values(1)
+            .required(false))
 }

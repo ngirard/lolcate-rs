@@ -282,22 +282,28 @@ fn update_database(database: &str) -> std::io::Result<()> {
     result
 }
 
-fn lookup_databases(databases: Vec<(String)>, pattern_re: &Regex, type_re: &Regex) -> std::io::Result<()> {
+fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, type_re: &Regex) -> std::io::Result<()> {
     for db in databases {
-        lookup_database(&db, &pattern_re, &type_re)?;
+        lookup_database(&db, patterns_re, &type_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(database: &str, pattern_re: &Regex, type_re: &Regex) -> std::io::Result<()> {
+fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, type_re: &Regex) -> std::io::Result<()> {
     let input_file = fs::File::open(db_fn(&database))?;
     let decoder = lz4::Decoder::new(input_file)?;
     let reader = io::BufReader::new(decoder);    
-    //let re: Regex = Regex::new(pattern).unwrap();
-    
     for _line in reader.lines() {
         let line = _line.unwrap();
-        if pattern_re.is_match(&line) && type_re.is_match(&line) {
+        if !type_re.is_match(&line) { continue };
+        let mut matched = false;
+        for re in patterns_re {
+            match re.is_match(&line) {
+                false => { matched = false; break },
+                true => { matched = true; }
+            };
+        }
+        if matched {
             println!("{}", &line);
         }
     }
@@ -346,11 +352,13 @@ fn main() -> std::io::Result<()> {
             Some(t) => Regex::new(&t).unwrap(),
             _ => Regex::new(".").unwrap() };    
         
-        let pattern_re = match args.value_of("pattern") {
-            Some(t) => Regex::new(&t).unwrap(),
-            _ => Regex::new(".").unwrap() };
-            
-        lookup_databases(databases, &pattern_re, &type_re)?;
+        let patterns = args.values_of("pattern").unwrap().collect::<Vec<_>>();
+        
+        let patterns_re = match patterns.len() {
+            0 => vec![ Regex::new(".").unwrap() ],
+            _ => patterns.into_iter().map(|p| Regex::new(&p).unwrap()).collect() };
+        
+        lookup_databases(databases, &patterns_re, &type_re)?;
         process::exit(0);
     }
     
