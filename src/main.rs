@@ -32,7 +32,7 @@ static GLOBAL_CONFIG_TEMPLATE : &str = r#"[types]
 # Examples:
 # img = ".*\\.(jp.?g|png|gif|JP.?G)$"
 # video = ".*\\.(flv|mp4|mp.?g|avi|wmv|mkv|3gp|m4v|asf|webm)$"
-# doc = ".*\\.(pdf|chm|epub|djvu?|mobi|azw3)$"
+# doc = ".*\\.(pdf|chm|epub|djvu?|mobi|azw3|odf|ods)$"
 # audio = ".*\\.(mp3|m4a|flac|ogg)$"
 
 "#;

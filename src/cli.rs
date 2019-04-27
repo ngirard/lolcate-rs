@@ -1,9 +1,9 @@
 extern crate clap;
-use clap::{Arg, App}; // SubCommand
+use clap::{Arg, App, crate_version}; // SubCommand
 
 pub fn build_cli() -> App<'static, 'static> {
     App::new("Lolcate")
-        .version("0.1")
+        .version(&crate_version!()[..])
         .author("Nicolas Girard <girard.nicolas@gmail.com>")
         .about("Find files by name -- A better locate / mlocate / updatedb")
         .arg(Arg::with_name("create")
