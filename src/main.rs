@@ -176,7 +176,7 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
     f = fs::File::create(&ignores_fn)?;
     f.write_all(PROJECT_IGNORE_TEMPLATE.as_bytes())?;
     
-    println!("Added database '{}'.\nPlease edit file {:?}.", db_name, config_fn);
+    println!("Created database '{}'.\nPlease edit file {:?}.", db_name, config_fn);
     process::exit(0);
 }
 
