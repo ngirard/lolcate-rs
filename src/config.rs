@@ -1,3 +1,22 @@
+/*
+ * This file is part of Lolcate.
+ *
+ * Copyright © 2019 Nicolas Girard
+ *
+ * ActivityPub is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ActivityPub is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ActivityPub.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 use toml::de::Error;
 use std::{convert, fs, io::prelude::*, path};
 use std::collections::HashMap;
@@ -39,11 +58,6 @@ where
             toml::from_str(buffer.as_str())
         }
         Err(error) => panic!(
-            "
-                The data in this stream is not valid UTF-8.\n
-                See error: '{}'
-                ",
-            error
-        ),
+            "The data in this stream is not valid UTF-8.\nSee error: '{}'\n", error),
     }
 }
