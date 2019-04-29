@@ -77,12 +77,12 @@ Let's modify it and add two directories for indexing:
 
 ```
 dirs = [
-  "/home/ngirard/Images",
-  "/home/ngirard/Documents"
+  "~/Images",
+  "~/Documents"
 ]
 ```
 
-As you noticed, the directories must be quoted and comma-separated. Also, no tilde or environment variable expansion is performed on them.
+As you noticed, the directories must be quoted and comma-separated. Also, tildes in directories are expanded, but not environment variables.
 
 The `ignores` file contains patterns Lolcate will use to ignore matching path names while indexing the filesystem. The syntax of the `ignores` file is the same as for the [.gitignore files](https://git-scm.com/docs/gitignore). You can leave it empty if you want to index everything according to the `config.toml` file.
 
