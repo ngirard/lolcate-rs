@@ -263,6 +263,10 @@ There are a number of areas you might want to consider contributing to:
 
 -   I'm not satisfied with the ignores rules being kept in a separate configuration file.
 
+-   Testing.
+
+    I'd be very interested in advice on existing code I could reuse / take advantage of in order to provide Lolcate with a complete testing bench.
+
 -   Backend strategy.
 
     Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Alghough it works well enough to my taste, I'd be glad to consider alternatives.
