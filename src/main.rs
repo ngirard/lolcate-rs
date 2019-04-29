@@ -40,7 +40,7 @@ static GLOBAL_CONFIG_TEMPLATE : &str = r#"[types]
 static PROJECT_CONFIG_TEMPLATE : &str = r#"
 description = ""
 
-# Dirs to add.
+# Dirs to index.
 dirs = [
   # "/first/dir",
   # "/second/dir"
@@ -176,7 +176,9 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
     f = fs::File::create(&ignores_fn)?;
     f.write_all(PROJECT_IGNORE_TEMPLATE.as_bytes())?;
     
-    println!("Created database '{}'.\nPlease edit file {:?}.", db_name, config_fn);
+    println!("Created database '{}'.\nPlease edit:", db_name);
+    println!("- the configuration file: {}", config_fn.display());
+    println!("- the ignores file:       {}", ignores_fn.display());
     process::exit(0);
 }
 
