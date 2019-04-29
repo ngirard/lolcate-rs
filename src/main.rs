@@ -195,7 +195,7 @@ fn database_names(path: PathBuf) -> Vec<(String)> {
 
 
 fn info_databases() -> std::io::Result<()> {
-    let mut db_data: Vec<(String, String, String)> = Vec::new();
+    let mut db_data: Vec<(String, String, String, String)> = Vec::new();
     let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
     let mut stdout = StandardStream::stdout(ColorChoice::Always);
     let mut section_spec = ColorSpec::new();
@@ -211,7 +211,8 @@ fn info_databases() -> std::io::Result<()> {
             let config_fn = config_fn(&db_name);
             let config = get_db_config(&config_fn);
             let description = config.description;
-            db_data.push((db_name.to_string(), description.to_string(), config_fn.display().to_string()));
+            db_data.push((db_name.to_string(), description.to_string(),
+                          config_fn.display().to_string(), ignores_fn(&db_name).display().to_string()));
         }
     }
     stdout.set_color(&section_spec)?;
@@ -222,12 +223,13 @@ fn info_databases() -> std::io::Result<()> {
         _ => {
             writeln!(&mut stdout, "Databases:")?;
             stdout.reset()?;
-            for (name, desc, config_fn) in db_data {
+            for (name, desc, config, ignores) in db_data {
                 stdout.set_color(&entry_spec)?;
                 writeln!(&mut stdout, "  {}", name)?;
                 stdout.reset()?;
-                println!("    Description: {}", desc);
-                println!("    Config file: {}", config_fn);
+                println!("    Description:  {}", desc);
+                println!("    Config file:  {}", config);
+                println!("    Ignores file: {}", ignores);
             }
         }
     };
