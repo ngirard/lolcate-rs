@@ -26,6 +26,7 @@ use std::process;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub description: String,
+    #[serde(deserialize_with = "deserialize::deserialize")]
     pub dirs: Vec<path::PathBuf>,
     pub include_dirs: bool,
     pub ignore_symlinks: bool,
@@ -59,5 +60,20 @@ where
         }
         Err(error) => panic!(
             "The data in this stream is not valid UTF-8.\nSee error: '{}'\n", error),
+    }
+}
+
+mod deserialize {
+    use serde::de::{Deserialize, Deserializer};
+    use std::path;
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<path::PathBuf>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = Vec::<String>::deserialize(deserializer)?;
+        s.into_iter()
+            .map(|s| expanduser::expanduser(&s).map_err(serde::de::Error::custom))
+            .collect()
     }
 }

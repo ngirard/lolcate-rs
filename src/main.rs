@@ -18,6 +18,7 @@
  */
 
 extern crate dirs;
+extern crate expanduser;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
@@ -62,7 +63,7 @@ description = ""
 
 # Directories to index.
 dirs = [
-  # "/first/dir",
+  # "~/first/dir",
   # "/second/dir"
 ]
 
