@@ -7,7 +7,8 @@ extern crate ignore;
 extern crate walkdir;
 extern crate termcolor;
 
-use std::path::PathBuf;
+use std::path::{PathBuf, MAIN_SEPARATOR};
+use std::borrow::Cow;
 use std::fs;
 use std::io::Write;
 use std::io;
@@ -345,14 +346,22 @@ fn build_regex(pattern: &str, ignore_case: bool) -> Regex {
     re
 }
 
-fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>) -> std::io::Result<()> {
+fn basename<'a>(line: &'a str) -> Cow<'a, str> {
+    let mut pieces = line.rsplit(MAIN_SEPARATOR);
+    match pieces.next() {
+        Some(p) => p.into(),
+        None => line.into(),
+    }
+}
+
+fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
     for db in databases {
-        lookup_database(&db, patterns_re, &types_re)?;
+        lookup_database(&db, patterns_re, &types_re, &bn_patterns_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>) -> std::io::Result<()> {
+fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
     let input_file = fs::File::open(db_fn(&database))?;
     let decoder = lz4::Decoder::new(input_file)?;
     let reader = io::BufReader::new(decoder);
@@ -371,6 +380,17 @@ fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Re
                 false => { matched = false; break },
                 true => { matched = true; }
             };
+        }
+        if !matched { continue };
+        if bn_patterns_re.len()>0 {
+            matched = false;
+            for bn_pattern_re in bn_patterns_re {
+                match bn_pattern_re.is_match(&basename(&line)) {
+                    false => { matched = false; break },
+                    true => { matched = true; }
+                };
+            }
+            if !matched { continue };
         }
         if matched {
             println!("{}", &line);
@@ -406,7 +426,7 @@ fn main() -> std::io::Result<()> {
         process::exit(0);
     }
 
-    if args.is_present("type") || args.is_present("pattern") {
+    if args.is_present("type") || args.is_present("pattern")  || args.is_present("basename_pattern"){
         let types_re: Vec<(regex::Regex)> = match args.value_of("type") {
             None => vec![],
             Some(vals) => {
@@ -421,8 +441,13 @@ fn main() -> std::io::Result<()> {
         let patterns_re = match patterns {
             None => vec![ Regex::new(".").unwrap() ],
             Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
+
+        let bn_patterns = args.values_of("basename_pattern").map(|vals| vals.collect::<Vec<_>>());
+        let bn_patterns_re = match bn_patterns {
+            None => vec![],
+            Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
         
-        lookup_databases(databases, &patterns_re, &types_re)?;
+        lookup_databases(databases, &patterns_re, &types_re, &bn_patterns_re)?;
         process::exit(0);
     }
     
