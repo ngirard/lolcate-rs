@@ -285,7 +285,7 @@ fn update_databases(databases: Vec<(String)>) -> std::io::Result<()> {
 fn update_database(database: &str) -> std::io::Result<()> {
     let config_fn = config_fn(&database);
     if !config_fn.exists() {
-        eprintln!("Config file not found for database {}.\nPerhaps you forgot to type lolcate --create {} ?", &database, &database);
+        eprintln!("Config file not found for database {}.\nPerhaps you forgot to run lolcate --create {} ?", &database, &database);
         process::exit(1);
     }
     let config = get_db_config(&config_fn);
@@ -362,7 +362,16 @@ fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_
 }
 
 fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
-    let input_file = fs::File::open(db_fn(&database))?;
+    let db_file = db_fn(&database);
+    if !db_file.parent().unwrap().exists() {
+        eprintln!("Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?", &database, &database);
+        process::exit(1);
+    }
+    if !db_file.exists() {
+        eprintln!("Database {} is empty. Perhaps you forgot to run lolcate --update {} ?", &database, &database);
+        process::exit(1);
+    }
+    let input_file = fs::File::open(db_file)?;
     let decoder = lz4::Decoder::new(input_file)?;
     let reader = io::BufReader::new(decoder);
     for _line in reader.lines() {
@@ -426,30 +435,27 @@ fn main() -> std::io::Result<()> {
         process::exit(0);
     }
 
-    if args.is_present("type") || args.is_present("pattern")  || args.is_present("basename_pattern"){
-        let types_re: Vec<(regex::Regex)> = match args.value_of("type") {
-            None => vec![],
-            Some(vals) => {
-                let types_map = get_types_map();
-                vals.split(",").map(|n| types_map.get(n))
-                    .filter(|t| t.is_some())
-                    .map(|t| t.unwrap())
-                    .map(|t| Regex::new(&t).unwrap())
-                    .collect()
-            }};
-        let patterns = args.values_of("pattern").map(|vals| vals.collect::<Vec<_>>());
-        let patterns_re = match patterns {
-            None => vec![ Regex::new(".").unwrap() ],
-            Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
-
-        let bn_patterns = args.values_of("basename_pattern").map(|vals| vals.collect::<Vec<_>>());
-        let bn_patterns_re = match bn_patterns {
-            None => vec![],
-            Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
-        
-        lookup_databases(databases, &patterns_re, &types_re, &bn_patterns_re)?;
-        process::exit(0);
-    }
+    // lookup
+    let types_re: Vec<(regex::Regex)> = match args.value_of("type") {
+        None => vec![],
+        Some(vals) => {
+            let types_map = get_types_map();
+            vals.split(",").map(|n| types_map.get(n))
+                .filter(|t| t.is_some())
+                .map(|t| t.unwrap())
+                .map(|t| Regex::new(&t).unwrap())
+                .collect()
+        }};
+    let patterns = args.values_of("pattern").map(|vals| vals.collect::<Vec<_>>());
+    let patterns_re = match patterns {
+        None => vec![ Regex::new(".").unwrap() ],
+        Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
     
+    let bn_patterns = args.values_of("basename_pattern").map(|vals| vals.collect::<Vec<_>>());
+    let bn_patterns_re = match bn_patterns {
+        None => vec![],
+        Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
+    
+    lookup_databases(databases, &patterns_re, &types_re, &bn_patterns_re)?;
     Ok(())
 }
