@@ -63,7 +63,7 @@ description = ""
 
 # Directories to index.
 dirs = [
-  # "/first/dir",
+  # "~/first/dir",
   # "/second/dir"
 ]
 

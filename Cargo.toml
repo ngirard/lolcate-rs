@@ -5,9 +5,9 @@ authors = ["Nicolas Girard <girard.nicolas@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-expanduser = "1.2"
 clap = "2"
 dirs = "1.0"
+expanduser = "1.2"
 ignore = "0.4"
 lazy_static = "1.3"
 lz4 = "1"
