@@ -1,6 +1,8 @@
 Lolcate
 =======
 
+[![Crates.io](https://img.shields.io/crates/v/lolcate-rs.svg)](https://crates.io/crates/lolcate-rs)
+
 **A comically fast way of indexing and querying your filesystem. Replaces locate / mlocate / updatedb. Written in Rust.**
 
 ![](images/lolcate.jpg)
@@ -247,9 +249,17 @@ Precompiled binaries are currently only available for Linux.
    ```
    
 3. Run
-     $ cargo install lolcate
+
+   ```
+   $ cargo install lolcate-rs
+   ```
+   
    to compile the sources from the latest release, or
-     $ cargo install --git https://github.com/ngirard/lolcate-rs
+
+   ```
+   $ cargo install --git https://github.com/ngirard/lolcate-rs
+   ```
+   
    to compile the latest version of the sources from the GitHub repository.
 
 # Contributing
