@@ -228,7 +228,9 @@ Now that our database is populated, we can run queries against it.
     
 # Installation
 
-Download the latest `lolcate` executable from [Github](https://github.com/ngirard/lolcate-rs/releases) into a directory belonging to your `PATH`.
+Download the latest `lolcate` precompiled binary from [Github](https://github.com/ngirard/lolcate-rs/releases) into a directory belonging to your `PATH`.
+
+Precompiled binaries are currently only available for Linux.
 
 ## Installation from sources
 
@@ -245,11 +247,10 @@ Download the latest `lolcate` executable from [Github](https://github.com/ngirar
    ```
    
 3. Run
-
-   ```sh
-   $ cargo install --git https://github.com/ngirard/lolcate-rs
-   
-   ```
+     $ cargo install lolcate
+   to compile the sources from the latest release, or
+     $ cargo install --git https://github.com/ngirard/lolcate-rs
+   to compile the latest version of the sources from the GitHub repository.
 
 # Contributing
 
