@@ -73,7 +73,7 @@ include_dirs = false
 # Set to true if you want skip symbolic links
 ignore_symlinks = false
 
-# Set to true if you want to index hidden files and directories
+# Set to true if you want to ignore hidden files and directories
 ignore_hidden = false
 
 "#;
