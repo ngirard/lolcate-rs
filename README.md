@@ -10,8 +10,8 @@ Lolcate is a fast, lightweight, versatile alternative to [locate / mlocate / upd
 It features:
 
 - **indexing rules** allowing you to easily specify which path names to index and which ones to prune ;
-- powerful, UTF8-compilant **querying rules** ;
-- the abitily to create **multiple databases** for multiple purposes.
+- powerful, UTF8-compliant **querying rules** ;
+- the ability to create **multiple databases** for multiple purposes.
 
 Lolcate comes as a single binary executable.
 
