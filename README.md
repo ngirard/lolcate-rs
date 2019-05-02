@@ -282,7 +282,7 @@ There are a number of areas you might want to consider contributing to:
 
 -   Backend strategy.
 
-    Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Alghough it works well enough for my taste, I'd be glad to consider alternatives.
+    Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Although it works well enough for my taste, I'd be glad to consider alternatives.
    
 # Acknowledgements
 
