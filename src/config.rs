@@ -28,10 +28,14 @@ pub struct Config {
     pub description: String,
     #[serde(deserialize_with = "deserialize::deserialize")]
     pub dirs: Vec<path::PathBuf>,
-    pub include_dirs: bool,
+    #[serde(default = Skip::None)]
+    pub skip: Skip,
     pub ignore_symlinks: bool,
     pub ignore_hidden: bool,
 }
+
+#[derive(Debug, Deserialize, PartialEq, Copy, Clone)]
+pub enum Skip { None, Dirs, Files }
 
 #[derive(Debug, Deserialize)]
 pub struct GlobalConfig {

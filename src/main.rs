@@ -67,8 +67,8 @@ dirs = [
   # "/second/dir"
 ]
 
-# Set to true if you want to index directories
-include_dirs = false
+# Set to either "Dirs" or "Files" to skip directories or files
+# skip = "Dirs"
 
 # Set to true if you want skip symbolic links
 ignore_symlinks = false
@@ -310,7 +310,7 @@ fn update_database(database: &str) -> std::io::Result<()> {
     }
     let config = get_db_config(&config_fn);
     check_db_config(&config, &config_fn);
-    let include_dirs = config.include_dirs;
+    let skip = config.skip;
     let ignore_symlinks = config.ignore_symlinks;
     
     let output_fn = fs::File::create(db_fn(&database))?;
@@ -327,10 +327,12 @@ fn update_database(database: &str) -> std::io::Result<()> {
                 continue;
             }
         };
-        if !include_dirs || ignore_symlinks {
+        if skip!=config::Skip::None || ignore_symlinks {
             if let Some(ft) = entry.file_type() {
-                if !include_dirs && ft.is_dir() {
-                    continue;
+                if ft.is_dir() {
+                    if skip==config::Skip::Dirs { continue };
+                } else {
+                    if skip==config::Skip::Files { continue };
                 }
                 if ignore_symlinks && ft.is_symlink() {
                     continue;

@@ -61,12 +61,12 @@ description = ""
 
 # Directories to index.
 dirs = [
-  # "/first/dir",
+  # "~/first/dir",
   # "/second/dir"
 ]
 
-# Set to true if you want to index directories
-include_dirs = false
+# Set to either "Dirs" or "Files" to skip directories or files
+# skip = "Dirs"
 
 # Set to true if you want skip symbolic links
 ignore_symlinks = false
@@ -85,6 +85,8 @@ dirs = [
 ```
 
 As you noticed, the directories must be quoted and comma-separated. Also, tildes in directories are expanded, but not environment variables.
+
+We can choose to index only files by setting `skip = "Dirs"`, and only directories by setting `skip = "Files"`. Additionally, symbolic links and hidden files and directories can be skipped by setting `ignore_symlinks = true` and `ignore_hidden = true` respectively.
 
 The `ignores` file contains patterns Lolcate will use to ignore matching path names while indexing the filesystem. The syntax of the `ignores` file is the same as for the [.gitignore files](https://git-scm.com/docs/gitignore). You can leave it empty if you want to index everything according to the `config.toml` file.
 
@@ -280,7 +282,7 @@ There are a number of areas you might want to consider contributing to:
 
 -   Backend strategy.
 
-    Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Alghough it works well enough to my taste, I'd be glad to consider alternatives.
+    Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Alghough it works well enough for my taste, I'd be glad to consider alternatives.
    
 # Acknowledgements
 
@@ -288,7 +290,7 @@ There are a number of areas you might want to consider contributing to:
 
 - A big thanks to [Andrew Gallant](https://blog.burntsushi.net/about/) for his tremendous work and the invaluable crates he wrote, which Lolcate relies upon (regex, ignore, walkdir).
 
-- The approach of simply recreating the database instead of udating it for performance purposes, which Lolcate currently uses, has been discussed multiple times on the Internet. I couldn't find my related notes, so I'd be glad to share any references you could provide.
+- The approach of simply recreating the database instead of updating it for performance purposes, which Lolcate currently uses, has been discussed multiple times on the Internet. I couldn't find my related notes, so I'd be glad to share any references you could provide.
 
 - The name "lolcate" has already been used for a prototype shell script [published as a Github Gist](https://gist.github.com/drhodes/1673187) in 2012. It was too good a name to not reusing it !
 
