@@ -396,6 +396,9 @@ fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Re
     let input_file = fs::File::open(db_file)?;
     let decoder = lz4::Decoder::new(input_file)?;
     let reader = io::BufReader::new(decoder);
+    let stdout = io::stdout();
+    let lock = stdout.lock();
+    let mut w = io::BufWriter::new(lock);
     for _line in reader.lines() {
         let line = _line.unwrap();
         let mut matched = false;
@@ -424,7 +427,7 @@ fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Re
             if !matched { continue };
         }
         if matched {
-            println!("{}", &line);
+            writeln!(&mut w, "{}", &line).unwrap();
         }
     }
     Ok(())
