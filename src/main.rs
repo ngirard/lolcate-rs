@@ -51,10 +51,10 @@ use regex::{Regex, RegexBuilder};
 static GLOBAL_CONFIG_TEMPLATE : &str = r#"[types]
 # Definition of custom path name types
 # Examples:
-# img = ".*\\.(jp.?g|png|gif|JP.?G)$"
-# video = ".*\\.(flv|mp4|mp.?g|avi|wmv|mkv|3gp|m4v|asf|webm)$"
-# doc = ".*\\.(pdf|chm|epub|djvu?|mobi|azw3|odf|ods|md|tex|txt)$"
-# audio = ".*\\.(mp3|m4a|flac|ogg)$"
+img = ".*\\.(jp.?g|png|gif|JP.?G)$"
+video = ".*\\.(flv|mp4|mp.?g|avi|wmv|mkv|3gp|m4v|asf|webm)$"
+doc = ".*\\.(pdf|chm|epub|djvu?|mobi|azw3|odf|ods|md|tex|txt)$"
+audio = ".*\\.(mp3|m4a|flac|ogg)$"
 
 "#;
 

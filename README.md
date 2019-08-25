@@ -199,9 +199,7 @@ Now that our database is populated, we can run queries against it.
     (...)
     ```
     
-    No path types are predefined, but the global configuration file contains boilerplate we can use to define ours.
-    
-    For instance, if we edit the global configuration file as follows
+    The following path types are predefined:
     ```
     [types]
     img = ".*\\.(jp.?g|png|gif|JP.?G)$"
@@ -210,7 +208,7 @@ Now that our database is populated, we can run queries against it.
     audio = ".*\\.(mp3|m4a|flac|ogg)$"
     ```
 
-    the path types can be used in queries:
+    these path types can be used in queries:
     ```sh
     $ lolcate --type img cropping
     /home/ngirard/Documents/READMEs/2018-05-15-Cropping_images_fig1.jpg
