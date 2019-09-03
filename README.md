@@ -44,8 +44,8 @@ Before using Lolcate, a database needs to be created. Let's create one:
 $ lolcate --create
 Created database 'default'.
 Please edit:
-- the configuration file: /home/ngirard/.local/share/lolcate/default/config.toml
-- the ignores file:       /home/ngirard/.local/share/lolcate/default/ignores
+- the configuration file: /home/ngirard/.config/lolcate/default/config.toml
+- the ignores file:       /home/ngirard/.config/lolcate/default/ignores
 ```
    
 Since we didn't specify the name of the database, Lolcate chose the name `default`. We could have specified the name of the database using `lolcate --create --db <db_name>`.
@@ -195,7 +195,7 @@ Now that our database is populated, we can run queries against it.
     ```sh
     $ lolcate --info
     Config file:
-    /home/ngirard/.local/share/lolcate/config.toml
+    /home/ngirard/.config/lolcate/config.toml
     (...)
     ```
     
