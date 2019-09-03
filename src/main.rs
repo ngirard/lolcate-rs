@@ -86,8 +86,14 @@ static PROJECT_IGNORE_TEMPLATE : &str = r#"# Dirs / files to ignore.
 # *~
 "#;
 
-pub fn lolcate_path() -> PathBuf {
-    let mut path = dirs::data_local_dir().unwrap();
+pub fn lolcate_config_path() -> PathBuf {
+    let mut path = dirs::config_dir().unwrap();
+    path.push("lolcate");
+    path
+}
+
+pub fn lolcate_data_path() -> PathBuf {
+    let mut path = dirs::data_dir().unwrap();
     path.push("lolcate");
     path
 }
@@ -155,34 +161,34 @@ fn check_db_config(config: &config::Config, toml_file: &PathBuf) {
 }
 
 fn global_config_fn() -> PathBuf {
-    let mut _fn = lolcate_path();
+    let mut _fn = lolcate_config_path();
     _fn.push("config.toml");
     _fn
 }
 
 fn config_fn(db_name: &str) -> PathBuf {
-    let mut _fn = lolcate_path();
+    let mut _fn = lolcate_config_path();
     _fn.push(db_name);
     _fn.push("config.toml");
     _fn
 }
 
 fn db_fn(db_name: &str) -> PathBuf {
-    let mut _fn = lolcate_path();
+    let mut _fn = lolcate_data_path();
     _fn.push(db_name);
     _fn.push("db.lz4");
     _fn
 }
 
 fn ignores_fn(db_name: &str) -> PathBuf {
-    let mut _fn = lolcate_path();
+    let mut _fn = lolcate_config_path();
     _fn.push(db_name);
     _fn.push("ignores");
     _fn
 }
 
 fn create_database(db_name: &str) -> std::io::Result<()> {
-    let mut db_dir = lolcate_path();
+    let mut db_dir = lolcate_data_path();
     db_dir.push(db_name);
     if db_dir.exists() {
         eprintln!("Database {} already exists", &db_name);
@@ -216,8 +222,8 @@ fn database_names(path: PathBuf) -> Vec<(String)> {
 
 
 fn info_databases() -> std::io::Result<()> {
-    let mut db_data: Vec<(String, String, String, String)> = Vec::new();
-    let walker = walkdir::WalkDir::new(lolcate_path()).min_depth(1).into_iter();
+    let mut db_data: Vec<(String, String, String, String, String)> = Vec::new();
+    let walker = walkdir::WalkDir::new(lolcate_config_path()).min_depth(1).into_iter();
     let mut stdout = StandardStream::stdout(ColorChoice::Always);
     let mut section_spec = ColorSpec::new();
     section_spec.set_fg(Some(Color::Cyan));
@@ -232,8 +238,11 @@ fn info_databases() -> std::io::Result<()> {
             let config_fn = config_fn(&db_name);
             let config = get_db_config(&config_fn);
             let description = config.description;
+            let mut db_fn = lolcate_data_path();
+            db_fn.push(db_name);
             db_data.push((db_name.to_string(), description.to_string(),
-                          config_fn.display().to_string(), ignores_fn(&db_name).display().to_string()));
+                          config_fn.display().to_string(), ignores_fn(&db_name).display().to_string(),
+                          db_fn.display().to_string()));
         }
     }
     stdout.set_color(&section_spec)?;
@@ -244,13 +253,14 @@ fn info_databases() -> std::io::Result<()> {
         _ => {
             writeln!(&mut stdout, "Databases:")?;
             stdout.reset()?;
-            for (name, desc, config, ignores) in db_data {
+            for (name, desc, config, ignores, db_fn) in db_data {
                 stdout.set_color(&entry_spec)?;
                 writeln!(&mut stdout, "  {}", name)?;
                 stdout.reset()?;
                 println!("    Description:  {}", desc);
                 println!("    Config file:  {}", config);
                 println!("    Ignores file: {}", ignores);
+                println!("    Data file:    {}", db_fn);
             }
         }
     };
@@ -302,10 +312,10 @@ fn update_databases(databases: Vec<(String)>) -> std::io::Result<()> {
 }
 
 
-fn update_database(database: &str) -> std::io::Result<()> {
-    let config_fn = config_fn(&database);
+fn update_database(db_name: &str) -> std::io::Result<()> {
+    let config_fn = config_fn(&db_name);
     if !config_fn.exists() {
-        eprintln!("Config file not found for database {}.\nPerhaps you forgot to run lolcate --create {} ?", &database, &database);
+        eprintln!("Config file not found for database {}.\nPerhaps you forgot to run lolcate --create {} ?", &db_name, &db_name);
         process::exit(1);
     }
     let config = get_db_config(&config_fn);
@@ -313,13 +323,13 @@ fn update_database(database: &str) -> std::io::Result<()> {
     let skip = config.skip;
     let ignore_symlinks = config.ignore_symlinks;
     
-    let output_fn = fs::File::create(db_fn(&database))?;
+    let output_fn = fs::File::create(db_fn(&db_name))?;
     let mut encoder = EncoderBuilder::new()
         .level(4)
         .build(output_fn)?;
     
-    println!("Updating {}...", database);
-    for entry in walker(&config, &database) {
+    println!("Updating {}...", db_name);
+    for entry in walker(&config, &db_name) {
         let entry = match entry {
             Ok(_entry) => _entry,
             Err(err) => {
@@ -376,21 +386,21 @@ fn basename<'a>(line: &'a str) -> Cow<'a, str> {
     }
 }
 
-fn lookup_databases(databases: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
-    for db in databases {
-        lookup_database(&db, patterns_re, &types_re, &bn_patterns_re)?;
+fn lookup_databases(db_names: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
+    for db_name in db_names {
+        lookup_database(&db_name, patterns_re, &types_re, &bn_patterns_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(database: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
-    let db_file = db_fn(&database);
+fn lookup_database(db_name: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
+    let db_file = db_fn(&db_name);
     if !db_file.parent().unwrap().exists() {
-        eprintln!("Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?", &database, &database);
+        eprintln!("Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?", &db_name, &db_name);
         process::exit(1);
     }
     if !db_file.exists() {
-        eprintln!("Database {} is empty. Perhaps you forgot to run lolcate --update {} ?", &database, &database);
+        eprintln!("Database {} is empty. Perhaps you forgot to run lolcate --update {} ?", &db_name, &db_name);
         process::exit(1);
     }
     let input_file = fs::File::open(db_file)?;
@@ -441,7 +451,7 @@ fn main() -> std::io::Result<()> {
     
     let database = args.value_of("database").unwrap();
     let databases: Vec<(String)> = match args.is_present("all") {
-        true => database_names(lolcate_path()),
+        true => database_names(lolcate_config_path()),
         false => vec![ database.to_string() ],
     };
         
