@@ -209,8 +209,8 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
     process::exit(0);
 }
 
-fn database_names(path: PathBuf) -> Vec<(String)> {
-    let mut _dbs: Vec<(String)> = Vec::new();
+fn database_names(path: PathBuf) -> Vec<String> {
+    let mut _dbs: Vec<String> = Vec::new();
     let walker = walkdir::WalkDir::new(path).min_depth(1).into_iter();
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
         if let Some(db_name) = entry.unwrap().file_name().to_str(){
@@ -304,7 +304,7 @@ pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
     wd.build()
 }
 
-fn update_databases(databases: Vec<(String)>) -> std::io::Result<()> {
+fn update_databases(databases: Vec<String>) -> std::io::Result<()> {
     for db in databases {
         update_database(&db)?;
     }
@@ -386,14 +386,14 @@ fn basename<'a>(line: &'a str) -> Cow<'a, str> {
     }
 }
 
-fn lookup_databases(db_names: Vec<(String)>, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
+fn lookup_databases(db_names: Vec<String>, patterns_re: &Vec<Regex>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
     for db_name in db_names {
         lookup_database(&db_name, patterns_re, &types_re, &bn_patterns_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(db_name: &str, patterns_re: &Vec<(Regex)>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
+fn lookup_database(db_name: &str, patterns_re: &Vec<Regex>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
     let db_file = db_fn(&db_name);
     if !db_file.parent().unwrap().exists() {
         eprintln!("Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?", &db_name, &db_name);
@@ -450,7 +450,7 @@ fn main() -> std::io::Result<()> {
     create_global_config_if_needed()?;
     
     let database = args.value_of("database").unwrap();
-    let databases: Vec<(String)> = match args.is_present("all") {
+    let databases: Vec<String> = match args.is_present("all") {
         true => database_names(lolcate_config_path()),
         false => vec![ database.to_string() ],
     };
@@ -471,7 +471,7 @@ fn main() -> std::io::Result<()> {
     }
 
     // lookup
-    let types_re: Vec<(regex::Regex)> = match args.value_of("type") {
+    let types_re: Vec<regex::Regex> = match args.value_of("type") {
         None => vec![],
         Some(vals) => {
             let types_map = get_types_map();
