@@ -21,34 +21,34 @@ extern crate dirs;
 extern crate expanduser;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
-extern crate lz4;
 extern crate ignore;
-extern crate walkdir;
+extern crate lz4;
+extern crate serde;
 extern crate termcolor;
+extern crate walkdir;
 
-use std::path::{PathBuf, MAIN_SEPARATOR};
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fs;
-use std::io::Write;
 use std::io;
 use std::io::prelude::*;
+use std::io::Write;
+use std::path::{PathBuf, MAIN_SEPARATOR};
 use std::process;
 use std::str;
-use std::collections::HashMap;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
-mod config;
 mod cli;
+mod config;
 use crate::config::read_toml_file;
-use lz4::{EncoderBuilder};
+use lz4::EncoderBuilder;
 
-
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 extern crate regex;
 use regex::{Regex, RegexBuilder};
 
-static GLOBAL_CONFIG_TEMPLATE : &str = r#"[types]
+static GLOBAL_CONFIG_TEMPLATE: &str = r#"[types]
 # Definition of custom path name types
 # Examples:
 img = ".*\\.(jp.?g|png|gif|JP.?G)$"
@@ -58,7 +58,7 @@ audio = ".*\\.(mp3|m4a|flac|ogg)$"
 
 "#;
 
-static PROJECT_CONFIG_TEMPLATE : &str = r#"
+static PROJECT_CONFIG_TEMPLATE: &str = r#"
 description = ""
 
 # Directories to index.
@@ -78,7 +78,7 @@ ignore_hidden = false
 
 "#;
 
-static PROJECT_IGNORE_TEMPLATE : &str = r#"# Dirs / files to ignore.
+static PROJECT_IGNORE_TEMPLATE: &str = r#"# Dirs / files to ignore.
 # Use the same syntax as gitignore(5).
 # Common patterns:
 #
@@ -101,9 +101,7 @@ pub fn lolcate_data_path() -> PathBuf {
 fn get_db_config(toml_file: &PathBuf) -> config::Config {
     let mut buffer = String::new();
     let config: config::Config = match read_toml_file(&toml_file, &mut buffer) {
-        Ok(config) => {
-            config
-        }
+        Ok(config) => config,
         Err(error) => {
             eprintln!("Invalid TOML: {}", error);
             process::exit(1);
@@ -125,9 +123,7 @@ fn create_global_config_if_needed() -> std::io::Result<()> {
 fn get_global_config(toml_file: &PathBuf) -> config::GlobalConfig {
     let mut buffer = String::new();
     let config: config::GlobalConfig = match read_toml_file(&toml_file, &mut buffer) {
-        Ok(config) => {
-            config
-        }
+        Ok(config) => config,
         Err(error) => {
             eprintln!("Invalid TOML: {}", error);
             process::exit(1);
@@ -145,7 +141,10 @@ fn get_types_map() -> HashMap<String, String> {
 fn check_db_config(config: &config::Config, toml_file: &PathBuf) {
     // Check config
     if config.dirs.len() == 0 {
-        eprintln!("Please edit file {:?} and add at least a directory to scan.", toml_file);
+        eprintln!(
+            "Please edit file {:?} and add at least a directory to scan.",
+            toml_file
+        );
         process::exit(1);
     }
     for dir in &config.dirs {
@@ -154,7 +153,10 @@ fn check_db_config(config: &config::Config, toml_file: &PathBuf) {
             process::exit(1);
         }
         if !dir.is_dir() {
-            eprintln!("The specified path {} is not a directory or cannot be accessed.", dir.display());
+            eprintln!(
+                "The specified path {} is not a directory or cannot be accessed.",
+                dir.display()
+            );
             process::exit(1);
         }
     }
@@ -198,11 +200,11 @@ fn create_database(db_name: &str) -> std::io::Result<()> {
     fs::create_dir_all(config_fn.parent().unwrap())?;
     let mut f = fs::File::create(&config_fn)?;
     f.write_all(PROJECT_CONFIG_TEMPLATE.as_bytes())?;
-    
+
     let ignores_fn = ignores_fn(&db_name);
     f = fs::File::create(&ignores_fn)?;
     f.write_all(PROJECT_IGNORE_TEMPLATE.as_bytes())?;
-    
+
     println!("Created database '{}'.\nPlease edit:", db_name);
     println!("- the configuration file: {}", config_fn.display());
     println!("- the ignores file:       {}", ignores_fn.display());
@@ -213,17 +215,18 @@ fn database_names(path: PathBuf) -> Vec<String> {
     let mut _dbs: Vec<String> = Vec::new();
     let walker = walkdir::WalkDir::new(path).min_depth(1).into_iter();
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
-        if let Some(db_name) = entry.unwrap().file_name().to_str(){
+        if let Some(db_name) = entry.unwrap().file_name().to_str() {
             _dbs.push(db_name.to_string());
         }
     }
     _dbs
 }
 
-
 fn info_databases() -> std::io::Result<()> {
     let mut db_data: Vec<(String, String, String, String, String)> = Vec::new();
-    let walker = walkdir::WalkDir::new(lolcate_config_path()).min_depth(1).into_iter();
+    let walker = walkdir::WalkDir::new(lolcate_config_path())
+        .min_depth(1)
+        .into_iter();
     let mut stdout = StandardStream::stdout(ColorChoice::Always);
     let mut section_spec = ColorSpec::new();
     section_spec.set_fg(Some(Color::Cyan));
@@ -234,22 +237,26 @@ fn info_databases() -> std::io::Result<()> {
     stdout.reset()?;
     writeln!(&mut stdout, "  {}\n", global_config_fn().display())?;
     for entry in walker.filter_entry(|e| e.file_type().is_dir()) {
-        if let Some(db_name) = entry.unwrap().file_name().to_str(){
+        if let Some(db_name) = entry.unwrap().file_name().to_str() {
             let config_fn = config_fn(&db_name);
             let config = get_db_config(&config_fn);
             let description = config.description;
             let mut db_fn = lolcate_data_path();
             db_fn.push(db_name);
-            db_data.push((db_name.to_string(), description.to_string(),
-                          config_fn.display().to_string(), ignores_fn(&db_name).display().to_string(),
-                          db_fn.display().to_string()));
+            db_data.push((
+                db_name.to_string(),
+                description.to_string(),
+                config_fn.display().to_string(),
+                ignores_fn(&db_name).display().to_string(),
+                db_fn.display().to_string(),
+            ));
         }
     }
     stdout.set_color(&section_spec)?;
     match db_data.len() {
         0 => {
             writeln!(&mut stdout, "No databases found.")?;
-        },
+        }
         _ => {
             writeln!(&mut stdout, "Databases:")?;
             stdout.reset()?;
@@ -270,7 +277,7 @@ fn info_databases() -> std::io::Result<()> {
     match tm.len() {
         0 => {
             writeln!(&mut stdout, "No file types found.")?;
-        },
+        }
         _ => {
             writeln!(&mut stdout, "File types:")?;
             stdout.reset()?;
@@ -280,7 +287,8 @@ fn info_databases() -> std::io::Result<()> {
                 stdout.reset()?;
                 println!(": {}", glob);
             }
-        }};
+        }
+    };
     stdout.reset()?;
     println!("");
     Ok(())
@@ -290,17 +298,17 @@ pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
     let paths = &config.dirs;
     let mut wd = ignore::WalkBuilder::new(&paths[0]);
     wd.hidden(config.ignore_hidden) // Whether to ignore hidden files
-      .parents(false)     // Don't read ignore files from parent directories
-      .follow_links(true) // Follow symbolic links
-      .ignore(true)       // Don't read .ignore files
-      .git_global(false)  // Don't read global gitignore file
-      .git_ignore(false)  // Don't read .gitignore files
-      .git_exclude(false);// Don't read .git/info/exclude files
-        
+        .parents(false) // Don't read ignore files from parent directories
+        .follow_links(true) // Follow symbolic links
+        .ignore(true) // Don't read .ignore files
+        .git_global(false) // Don't read global gitignore file
+        .git_ignore(false) // Don't read .gitignore files
+        .git_exclude(false); // Don't read .git/info/exclude files
+
     for path in &paths[1..] {
         wd.add(path);
     }
-    wd.add_ignore(ignores_fn(&database));    
+    wd.add_ignore(ignores_fn(&database));
     wd.build()
 }
 
@@ -310,7 +318,6 @@ fn update_databases(databases: Vec<String>) -> std::io::Result<()> {
     }
     Ok(())
 }
-
 
 fn update_database(db_name: &str) -> std::io::Result<()> {
     let config_fn = config_fn(&db_name);
@@ -322,12 +329,10 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
     check_db_config(&config, &config_fn);
     let skip = config.skip;
     let ignore_symlinks = config.ignore_symlinks;
-    
+
     let output_fn = fs::File::create(db_fn(&db_name))?;
-    let mut encoder = EncoderBuilder::new()
-        .level(4)
-        .build(output_fn)?;
-    
+    let mut encoder = EncoderBuilder::new().level(4).build(output_fn)?;
+
     println!("Updating {}...", db_name);
     for entry in walker(&config, &db_name) {
         let entry = match entry {
@@ -337,12 +342,16 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
                 continue;
             }
         };
-        if skip!=config::Skip::None || ignore_symlinks {
+        if skip != config::Skip::None || ignore_symlinks {
             if let Some(ft) = entry.file_type() {
                 if ft.is_dir() {
-                    if skip==config::Skip::Dirs { continue };
+                    if skip == config::Skip::Dirs {
+                        continue;
+                    };
                 } else {
-                    if skip==config::Skip::Files { continue };
+                    if skip == config::Skip::Files {
+                        continue;
+                    };
                 }
                 if ignore_symlinks && ft.is_symlink() {
                     continue;
@@ -352,11 +361,13 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
             }
         }
         match entry.path().to_str() {
-            Some(s) => { writeln!(encoder, "{}", s)?; },
-            _ => { eprintln!("File name contains invalid unicode: {:?}", entry.path()) },
+            Some(s) => {
+                writeln!(encoder, "{}", s)?;
+            }
+            _ => eprintln!("File name contains invalid unicode: {:?}", entry.path()),
         }
     }
-    
+
     let (_output, result) = encoder.finish();
     result
 }
@@ -367,14 +378,14 @@ fn build_regex(pattern: &str, ignore_case: bool) -> Regex {
     };
     let re: Regex = match RegexBuilder::new(pattern)
         .case_insensitive(ignore_case || !UPPER_RE.is_match(&pattern))
-        .build() {
-            Ok(re) => {
-                re
-            }
-            Err(error) => {
-                eprintln!("Invalid regex: {}", error);
-                process::exit(1);
-            }};
+        .build()
+    {
+        Ok(re) => re,
+        Err(error) => {
+            eprintln!("Invalid regex: {}", error);
+            process::exit(1);
+        }
+    };
     re
 }
 
@@ -386,21 +397,37 @@ fn basename<'a>(line: &'a str) -> Cow<'a, str> {
     }
 }
 
-fn lookup_databases(db_names: Vec<String>, patterns_re: &Vec<Regex>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
+fn lookup_databases(
+    db_names: Vec<String>,
+    patterns_re: &Vec<Regex>,
+    types_re: &Vec<Regex>,
+    bn_patterns_re: &Vec<Regex>,
+) -> std::io::Result<()> {
     for db_name in db_names {
         lookup_database(&db_name, patterns_re, &types_re, &bn_patterns_re)?;
     }
     Ok(())
 }
 
-fn lookup_database(db_name: &str, patterns_re: &Vec<Regex>, types_re: &Vec<Regex>, bn_patterns_re: &Vec<Regex>) -> std::io::Result<()> {
+fn lookup_database(
+    db_name: &str,
+    patterns_re: &Vec<Regex>,
+    types_re: &Vec<Regex>,
+    bn_patterns_re: &Vec<Regex>,
+) -> std::io::Result<()> {
     let db_file = db_fn(&db_name);
     if !db_file.parent().unwrap().exists() {
-        eprintln!("Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?", &db_name, &db_name);
+        eprintln!(
+            "Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?",
+            &db_name, &db_name
+        );
         process::exit(1);
     }
     if !db_file.exists() {
-        eprintln!("Database {} is empty. Perhaps you forgot to run lolcate --update {} ?", &db_name, &db_name);
+        eprintln!(
+            "Database {} is empty. Perhaps you forgot to run lolcate --update {} ?",
+            &db_name, &db_name
+        );
         process::exit(1);
     }
     let input_file = fs::File::open(db_file)?;
@@ -412,29 +439,48 @@ fn lookup_database(db_name: &str, patterns_re: &Vec<Regex>, types_re: &Vec<Regex
     for _line in reader.lines() {
         let line = _line.unwrap();
         let mut matched = false;
-        if types_re.len()>0 {
+        if types_re.len() > 0 {
             for type_re in types_re {
-                if type_re.is_match(&line) { matched = true; break };
+                if type_re.is_match(&line) {
+                    matched = true;
+                    break;
+                };
             }
-            if !matched { continue };
+            if !matched {
+                continue;
+            };
         }
         matched = false;
         for re in patterns_re {
             match re.is_match(&line) {
-                false => { matched = false; break },
-                true => { matched = true; }
+                false => {
+                    matched = false;
+                    break;
+                }
+                true => {
+                    matched = true;
+                }
             };
         }
-        if !matched { continue };
-        if bn_patterns_re.len()>0 {
+        if !matched {
+            continue;
+        };
+        if bn_patterns_re.len() > 0 {
             matched = false;
             for bn_pattern_re in bn_patterns_re {
                 match bn_pattern_re.is_match(&basename(&line)) {
-                    false => { matched = false; break },
-                    true => { matched = true; }
+                    false => {
+                        matched = false;
+                        break;
+                    }
+                    true => {
+                        matched = true;
+                    }
                 };
             }
-            if !matched { continue };
+            if !matched {
+                continue;
+            };
         }
         if matched {
             writeln!(&mut w, "{}", &line).unwrap();
@@ -446,25 +492,25 @@ fn lookup_database(db_name: &str, patterns_re: &Vec<Regex>, types_re: &Vec<Regex
 fn main() -> std::io::Result<()> {
     let app = cli::build_cli();
     let args = app.get_matches();
-    
+
     create_global_config_if_needed()?;
-    
+
     let database = args.value_of("database").unwrap();
     let databases: Vec<String> = match args.is_present("all") {
         true => database_names(lolcate_config_path()),
-        false => vec![ database.to_string() ],
+        false => vec![database.to_string()],
     };
-        
+
     if args.is_present("create") {
         create_database(&database)?;
         process::exit(0);
     }
-    
+
     if args.is_present("update") {
         update_databases(databases)?;
         process::exit(0);
     }
-    
+
     if args.is_present("info") {
         info_databases()?;
         process::exit(0);
@@ -475,22 +521,36 @@ fn main() -> std::io::Result<()> {
         None => vec![],
         Some(vals) => {
             let types_map = get_types_map();
-            vals.split(",").map(|n| types_map.get(n))
+            vals.split(",")
+                .map(|n| types_map.get(n))
                 .filter(|t| t.is_some())
                 .map(|t| t.unwrap())
                 .map(|t| Regex::new(&t).unwrap())
                 .collect()
-        }};
-    let patterns = args.values_of("pattern").map(|vals| vals.collect::<Vec<_>>());
+        }
+    };
+    let patterns = args
+        .values_of("pattern")
+        .map(|vals| vals.collect::<Vec<_>>());
     let patterns_re = match patterns {
-        None => vec![ Regex::new(".").unwrap() ],
-        Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
-    
-    let bn_patterns = args.values_of("basename_pattern").map(|vals| vals.collect::<Vec<_>>());
+        None => vec![Regex::new(".").unwrap()],
+        Some(patterns) => patterns
+            .into_iter()
+            .map(|p| build_regex(&p, args.is_present("ignore_case")))
+            .collect(),
+    };
+
+    let bn_patterns = args
+        .values_of("basename_pattern")
+        .map(|vals| vals.collect::<Vec<_>>());
     let bn_patterns_re = match bn_patterns {
         None => vec![],
-        Some(patterns) => patterns.into_iter().map(|p| build_regex(&p, args.is_present("ignore_case"))).collect() };
-    
+        Some(patterns) => patterns
+            .into_iter()
+            .map(|p| build_regex(&p, args.is_present("ignore_case")))
+            .collect(),
+    };
+
     lookup_databases(databases, &patterns_re, &types_re, &bn_patterns_re)?;
     Ok(())
 }
