@@ -28,7 +28,7 @@ pub struct Config {
     pub description: String,
     #[serde(deserialize_with = "deserialize::deserialize")]
     pub dirs: Vec<path::PathBuf>,
-    #[serde(default = Skip::None)]
+    #[serde(default)]
     pub skip: Skip,
     pub ignore_symlinks: bool,
     pub ignore_hidden: bool,
@@ -39,6 +39,12 @@ pub enum Skip {
     None,
     Dirs,
     Files,
+}
+
+impl Default for Skip {
+    fn default() -> Self {
+        Skip::None
+    }
 }
 
 #[derive(Debug, Deserialize)]
