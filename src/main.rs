@@ -17,16 +17,6 @@
  * along with ActivityPub.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-extern crate dirs;
-extern crate expanduser;
-#[macro_use]
-extern crate serde_derive;
-extern crate ignore;
-extern crate lz4;
-extern crate serde;
-extern crate termcolor;
-extern crate walkdir;
-
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs;

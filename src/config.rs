@@ -17,11 +17,11 @@
  * along with ActivityPub.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::process;
 use std::{convert, fs, io::prelude::*, path};
 use toml::de::Error;
-use toml::macros::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
