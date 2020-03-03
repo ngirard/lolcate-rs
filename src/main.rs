@@ -17,25 +17,22 @@
  * along with ActivityPub.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use std::borrow::Cow;
+use crate::config::read_toml_file;
+use lazy_static::lazy_static;
+use lz4::EncoderBuilder;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::io::prelude::*;
 use std::io::Write;
-use std::path::{PathBuf, MAIN_SEPARATOR};
+use std::path::PathBuf;
 use std::process;
 use std::str;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 mod cli;
 mod config;
-use crate::config::read_toml_file;
-use lz4::EncoderBuilder;
 
-#[macro_use]
-extern crate lazy_static;
-extern crate regex;
 use regex::{Regex, RegexBuilder};
 
 static GLOBAL_CONFIG_TEMPLATE: &str = r#"[types]
@@ -263,7 +260,7 @@ fn info_databases() -> std::io::Result<()> {
     };
     let tm = get_types_map();
     stdout.set_color(&section_spec)?;
-    println!("");
+    println!();
     match tm.len() {
         0 => {
             writeln!(&mut stdout, "No file types found.")?;
@@ -280,7 +277,7 @@ fn info_databases() -> std::io::Result<()> {
         }
     };
     stdout.reset()?;
-    println!("");
+    println!();
     Ok(())
 }
 
@@ -379,31 +376,21 @@ fn build_regex(pattern: &str, ignore_case: bool) -> Regex {
     re
 }
 
-fn basename<'a>(line: &'a str) -> Cow<'a, str> {
-    let mut pieces = line.rsplit(MAIN_SEPARATOR);
-    match pieces.next() {
-        Some(p) => p.into(),
-        None => line.into(),
-    }
-}
-
 fn lookup_databases(
     db_names: Vec<String>,
-    patterns_re: &Vec<Regex>,
-    types_re: &Vec<Regex>,
-    bn_patterns_re: &Vec<Regex>,
+    patterns_re: &[Regex],
+    types_re: &[Regex],
 ) -> std::io::Result<()> {
     for db_name in db_names {
-        lookup_database(&db_name, patterns_re, &types_re, &bn_patterns_re)?;
+        lookup_database(&db_name, patterns_re, &types_re)?;
     }
     Ok(())
 }
 
 fn lookup_database(
     db_name: &str,
-    patterns_re: &Vec<Regex>,
-    types_re: &Vec<Regex>,
-    bn_patterns_re: &Vec<Regex>,
+    patterns_re: &[Regex],
+    types_re: &[Regex],
 ) -> std::io::Result<()> {
     let db_file = db_fn(&db_name);
     if !db_file.parent().unwrap().exists() {
@@ -428,53 +415,16 @@ fn lookup_database(
     let mut w = io::BufWriter::new(lock);
     for _line in reader.lines() {
         let line = _line.unwrap();
-        let mut matched = false;
         if types_re.len() > 0 {
-            for type_re in types_re {
-                if type_re.is_match(&line) {
-                    matched = true;
-                    break;
-                };
-            }
-            if !matched {
+            if !types_re.iter().any(|type_re| type_re.is_match(&line)) {
                 continue;
-            };
+            }
         }
-        matched = false;
-        for re in patterns_re {
-            match re.is_match(&line) {
-                false => {
-                    matched = false;
-                    break;
-                }
-                true => {
-                    matched = true;
-                }
-            };
-        }
-        if !matched {
+        if !patterns_re.iter().all(|re| re.is_match(&line)) {
             continue;
-        };
-        if bn_patterns_re.len() > 0 {
-            matched = false;
-            for bn_pattern_re in bn_patterns_re {
-                match bn_pattern_re.is_match(&basename(&line)) {
-                    false => {
-                        matched = false;
-                        break;
-                    }
-                    true => {
-                        matched = true;
-                    }
-                };
-            }
-            if !matched {
-                continue;
-            };
         }
-        if matched {
-            writeln!(&mut w, "{}", &line).unwrap();
-        }
+
+        writeln!(&mut w, "{}", &line).unwrap();
     }
     Ok(())
 }
@@ -507,40 +457,33 @@ fn main() -> std::io::Result<()> {
     }
 
     // lookup
-    let types_re: Vec<regex::Regex> = match args.value_of("type") {
-        None => vec![],
-        Some(vals) => {
-            let types_map = get_types_map();
-            vals.split(",")
-                .map(|n| types_map.get(n))
-                .filter(|t| t.is_some())
-                .map(|t| t.unwrap())
-                .map(|t| Regex::new(&t).unwrap())
-                .collect()
-        }
-    };
-    let patterns = args
+    let types_map = get_types_map();
+    let types_re = args
+        .value_of("type")
+        .unwrap_or_default()
+        .split(",")
+        .map(|n| types_map.get(n))
+        .filter(|t| t.is_some())
+        .map(|t| t.unwrap())
+        .map(|t| Regex::new(&t).unwrap())
+        .collect::<Vec<_>>();
+
+    let ignore_case = args.is_present("ignore_case");
+
+    let patterns_re = args
         .values_of("pattern")
-        .map(|vals| vals.collect::<Vec<_>>());
-    let patterns_re = match patterns {
-        None => vec![Regex::new(".").unwrap()],
-        Some(patterns) => patterns
-            .into_iter()
-            .map(|p| build_regex(&p, args.is_present("ignore_case")))
-            .collect(),
-    };
+        .unwrap_or_default()
+        .map(|p| build_regex(p, ignore_case));
 
-    let bn_patterns = args
+    let bn_patterns_re = args
         .values_of("basename_pattern")
-        .map(|vals| vals.collect::<Vec<_>>());
-    let bn_patterns_re = match bn_patterns {
-        None => vec![],
-        Some(patterns) => patterns
-            .into_iter()
-            .map(|p| build_regex(&p, args.is_present("ignore_case")))
-            .collect(),
-    };
+        .unwrap_or_default()
+        .map(|p| build_regex(&format!("/[^/]*{}[^/]*$", p), ignore_case));
 
-    lookup_databases(databases, &patterns_re, &types_re, &bn_patterns_re)?;
+    lookup_databases(
+        databases,
+        &patterns_re.chain(bn_patterns_re).collect::<Vec<_>>(),
+        &types_re,
+    )?;
     Ok(())
 }
