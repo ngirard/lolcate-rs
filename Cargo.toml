@@ -8,7 +8,6 @@ repository = "https://github.com/ngirard/lolcate-rs"
 keywords = ["filesystem-indexer", "search", "regex"]
 categories = ["command-line-utilities", "filesystem"]
 license = "GPL-3.0"
-license-file = "LICENSE"
 maintenance = { status = "actively-developed" }
 authors = ["Nicolas Girard <girard.nicolas@gmail.com>"]
 edition = "2018"
