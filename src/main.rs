@@ -63,6 +63,9 @@ ignore_symlinks = false
 # Set to true if you want to ignore hidden files and directories
 ignore_hidden = false
 
+# Set to true to read .gitignore files and ignore matching files
+gitignore = false
+
 "#;
 
 static PROJECT_IGNORE_TEMPLATE: &str = r#"# Dirs / files to ignore.
@@ -288,8 +291,8 @@ pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
         .parents(false) // Don't read ignore files from parent directories
         .follow_links(true) // Follow symbolic links
         .ignore(true) // Don't read .ignore files
-        .git_global(false) // Don't read global gitignore file
-        .git_ignore(false) // Don't read .gitignore files
+        .git_global(config.gitignore) // Don't read global gitignore file
+        .git_ignore(config.gitignore) // Don't read .gitignore files
         .git_exclude(false); // Don't read .git/info/exclude files
 
     for path in &paths[1..] {
