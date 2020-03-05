@@ -30,6 +30,8 @@ pub struct Config {
     pub dirs: Vec<path::PathBuf>,
     #[serde(default)]
     pub skip: Skip,
+    #[serde(default)]
+    pub gitignore: bool,
     pub ignore_symlinks: bool,
     pub ignore_hidden: bool,
 }
