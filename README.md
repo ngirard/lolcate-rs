@@ -65,7 +65,8 @@ dirs = [
   # "/second/dir"
 ]
 
-# Set to either "Dirs" or "Files" to skip directories or files
+# Set to "Dirs" or "Files" to skip directories or files.
+# If unset, or set to "None", both files and directories will be included.
 # skip = "Dirs"
 
 # Set to true if you want skip symbolic links
