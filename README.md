@@ -74,6 +74,9 @@ ignore_symlinks = false
 
 # Set to true if you want to index hidden files and directories
 ignore_hidden = false
+
+# Set to true to read .gitignore files and ignore matching files
+gitignore = false
 ```
 
 Let's modify it and add two directories for indexing:
