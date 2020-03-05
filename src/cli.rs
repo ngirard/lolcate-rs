@@ -18,7 +18,7 @@
  */
 
 extern crate clap;
-use clap::{Arg, App, crate_version}; // SubCommand
+use clap::{crate_version, App, Arg}; // SubCommand
 
 pub fn build_cli() -> App<'static, 'static> {
     App::new("Lolcate")
