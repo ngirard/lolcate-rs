@@ -317,8 +317,12 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
     check_db_config(&config, &config_fn);
     let skip = config.skip;
     let ignore_symlinks = config.ignore_symlinks;
-
-    let output_fn = fs::File::create(db_fn(&db_name))?;
+    let db_path = db_fn(&db_name);
+    let parent_path = db_path.parent().unwrap();
+    if !parent_path.exists() {
+        fs::create_dir_all(parent_path)?;
+    }
+    let output_fn = fs::File::create(db_path)?;
     let mut encoder = EncoderBuilder::new().level(4).build(output_fn)?;
 
     println!("Updating {}...", db_name);
@@ -417,7 +421,7 @@ fn lookup_database(
     for _line in reader.lines() {
         let line = _line.unwrap();
         if types_re.len() > 0 {
-            if !types_re.iter().any(|type_re| type_re.is_match(&line)) {
+            if !types_re.iter().any(|re| re.is_match(&line)) {
                 continue;
             }
         }

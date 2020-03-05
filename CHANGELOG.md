@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Fixed
 
 - Fix error when no `skip` directive in config.toml (#7).
+- Create db path if necessary (#8).
 
 ## [0.5.0] – 2019-09-03
 
