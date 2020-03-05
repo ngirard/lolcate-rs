@@ -40,7 +40,7 @@ jobs:
         id: package
         shell: bash
         run: |
-          ARCHIVE_NAME="${GITHUB_TAG_NAME}-${{ matrix.target }}"
+          ARCHIVE_NAME="lolcate-${GITHUB_TAG_NAME}-${{ matrix.target }}"
           if [[ '${{ matrix.target }}' == *windows* ]]; then
             ARCHIVE_FILE="${ARCHIVE_NAME}.zip"
             mv LICENSE LICENSE.txt
