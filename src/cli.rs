@@ -64,7 +64,7 @@ pub fn build_cli() -> App<'static, 'static> {
             .conflicts_with_all(&["create", "info"])
             .required(false))
         .arg(Arg::with_name("ignore_case")
-            .help("Search the given patterns case-insensitively. By default, patterns are searched case-insensitively when all in lowercase, and sensitively otherwise.")
+            .help("Search the given patterns case-insensitively. Default is \"smart-case\", i.e. patterns are searched case-insensitively when all in lowercase, and sensitively otherwise.")
             .short("i")
             .long("ignore-case")
             .takes_value(false)
