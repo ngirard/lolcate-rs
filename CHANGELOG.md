@@ -6,6 +6,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [0.6.0pre] – 2020-03-06
 
+### Added
+
+- The new `gitignore` option, when set to `true` in `config.toml`, enables Lolcate to take into account `.gitignore` files and skip the paths that match one of the `.gitignore` patterns.
+
 ### Changed
 
 - Use regex for basename matching instead of splitting the path, leading to a 10% performance improvement (ec5140f, thanks to @icewind1991).
