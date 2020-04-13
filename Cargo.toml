@@ -33,3 +33,6 @@ walkdir = "2"
 [[bin]]
 path = "src/main.rs"
 name = "lolcate"
+
+[profile.release]
+lto = true
