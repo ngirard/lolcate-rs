@@ -12,7 +12,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Changed
 
-- Use regex for basename matching instead of splitting the path, leading to a 10% performance improvement (ec5140f, thanks to @icewind1991).
+- Use regex for basename matching instead of splitting the path, leading to a 10% performance improvement 
+  (ec5140f, thanks to [@icewind1991](https://github.com/icewind1991)).
 - Added `adoc` (Asciidoc) to the `doc` predefined path type.
 
 
