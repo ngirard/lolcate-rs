@@ -238,9 +238,13 @@ The following Locate options do not have an equivalent in Lolcate: `--count`, `-
 
 # Installation
 
-Download the latest `lolcate` precompiled binary from [Github](https://github.com/ngirard/lolcate-rs/releases) into a directory belonging to your `PATH`.
+## Using the pre-compiled binaries
 
-Precompiled binaries are currently only available for Linux.
+This is the easiest and recommended way.
+
+Download the latest `lolcate` pre-compiled binary from [Github](https://github.com/ngirard/lolcate-rs/releases) into a directory belonging to your `PATH`.
+
+Pre-compiled binaries are currently only available for Linux and MacOS.
 
 ## Installation from sources
 
