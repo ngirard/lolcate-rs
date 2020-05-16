@@ -276,19 +276,23 @@ While all contributions are welcome, the ideal contributions for me would be fin
 
 There are a number of areas you might want to consider contributing to:
 
--   The most needed feature is the colored printout of pattern matches.
+- The most needed feature is the colored printout of pattern matches ([#13](https://github.com/ngirard/lolcate-rs/issues/13)).
 
--   Lolcate is not yet useable as a library.
+- Lolcate is not yet useable as a library.
 
--   I'm not satisfied with the ignores rules being kept in a separate configuration file.
+- I'm not satisfied with the ignores rules being kept in a separate configuration file ([#14](https://github.com/ngirard/lolcate-rs/issues/14)).
 
--   Testing.
+- Testing.
 
-    I'd be very interested in advice on existing code I could reuse / take advantage of in order to provide Lolcate with a complete testing bench.
+  I'd be very interested in advice on existing code I could reuse / take advantage of in order to provide Lolcate with a complete testing bench.
 
--   Backend strategy.
+- Backend strategy.
 
-    Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Although it works well enough for my taste, I'd be glad to consider alternatives.
+  Lolcate currently stores its data as a lz4-compressed list of path names, and recreates it each time `lolcate --update` is run. It's as simple as you can get. Although it works well enough for my taste, I'd be glad to consider alternatives ([#15](https://github.com/ngirard/lolcate-rs/issues/15)).
+
+- Benchmarking
+  
+  ([#16](https://github.com/ngirard/lolcate-rs/issues/16))
    
 # Acknowledgements
 
