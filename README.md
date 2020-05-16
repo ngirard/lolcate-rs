@@ -231,7 +231,11 @@ Now that our database is populated, we can run queries against it.
     $ lolcate --basename [eé]conomie --type doc 2018
     /home/ngirard/Documents/Notes/2018-11-12-Economie_politique.tex
     ```
-    
+
+# Differences with `mlocate`
+
+The following Locate options do not have an equivalent in Lolcate: `--count`, `--existing`, `--follow`, `--transliterate`, `--limit`, `--nofollow`, `--null`.
+
 # Installation
 
 Download the latest `lolcate` precompiled binary from [Github](https://github.com/ngirard/lolcate-rs/releases) into a directory belonging to your `PATH`.
