@@ -35,6 +35,18 @@ Lolcate operates in two phases:
 
 The same `lolcate` binary executable performs both indexing and querying.
 
+## Suggested use
+
+Use shell aliases and functions to query your databases to your liking, e.g.
+
+```sh
+alias d='lolcate --db documents'
+
+alias zik='lolcate --db music --type audio'
+z(){ mpv --playlist <(zik $1); }
+zs(){ mpv --playlist <(zik $1|shuf); }
+```
+
 # Guide
 
 **Creating a database**
