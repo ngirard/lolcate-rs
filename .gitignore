@@ -2,4 +2,6 @@
 **/*.rs.bk
 /test
 perf/
-
+/misc
+/mk_test_tree.sh
+/notes.txt
