@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.1] - 2020-05-18
+
+### Fixed
+
+- Honor config.ignore_symlinks when walking the directory trees (thanks to [BartMassey](https://github.com/BartMassey))
 
 ## [0.6.0] – 2020-05-16
 

@@ -290,7 +290,7 @@ pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
     let mut wd = ignore::WalkBuilder::new(&paths[0]);
     wd.hidden(config.ignore_hidden) // Whether to ignore hidden files
         .parents(false) // Don't read ignore files from parent directories
-        .follow_links(true) // Follow symbolic links
+        .follow_links(!config.ignore_symlinks) // Follow symbolic links
         .ignore(true) // Don't read .ignore files
         .git_global(config.gitignore) // Don't read global gitignore file
         .git_ignore(config.gitignore) // Don't read .gitignore files
