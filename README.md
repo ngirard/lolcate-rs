@@ -244,6 +244,12 @@ Now that our database is populated, we can run queries against it.
     /home/ngirard/Documents/Notes/2018-11-12-Economie_politique.tex
     ```
 
+# Where does Lolcate store its files ?
+
+- the configuration files are stored either in `$XDG_CONFIG_HOME/lolcate` or in `$HOME/.config/lolcate`;
+
+- the database files are stored either in `$XDG_DATA_HOME/lolcate` or in `$HOME/.local/share/lolcate`.
+
 # Differences with `mlocate`
 
 The following Locate options do not have an equivalent in Lolcate: `--count`, `--existing`, `--follow`, `--transliterate`, `--limit`, `--nofollow`, `--null`.
