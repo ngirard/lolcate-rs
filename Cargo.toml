@@ -19,6 +19,7 @@ exclude = [
 
 [dependencies]
 clap = "2"
+crossbeam-channel = "0.4"
 dirs = "2.0"
 expanduser = "1.2"
 ignore = "0.4"

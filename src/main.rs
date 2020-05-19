@@ -18,6 +18,7 @@
  */
 
 use crate::config::read_toml_file;
+extern crate crossbeam_channel as channel;
 use lazy_static::lazy_static;
 use lz4::EncoderBuilder;
 use std::collections::HashMap;
@@ -28,6 +29,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process;
 use std::str;
+use std::thread;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 mod cli;
@@ -285,7 +287,7 @@ fn info_databases() -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
+pub fn walker(config: &config::Config, database: &str) -> ignore::WalkParallel {
     let paths = &config.dirs;
     let mut wd = ignore::WalkBuilder::new(&paths[0]);
     wd.hidden(config.ignore_hidden) // Whether to ignore hidden files
@@ -300,7 +302,8 @@ pub fn walker(config: &config::Config, database: &str) -> ignore::Walk {
         wd.add(path);
     }
     wd.add_ignore(ignores_fn(&database));
-    wd.build()
+    wd.threads(4);
+    wd.build_parallel()
 }
 
 fn update_databases(databases: Vec<String>) -> std::io::Result<()> {
@@ -326,49 +329,65 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
         fs::create_dir_all(parent_path)?;
     }
     let output_fn = fs::File::create(db_path)?;
-    let mut encoder = EncoderBuilder::new()
-        .level(3)
-        .block_mode(lz4::BlockMode::Linked)
-        .block_size(lz4::BlockSize::Max256KB)
-        .build(output_fn)?;
+    let (tx, rx) = channel::bounded::<ignore::DirEntry>(8000);
 
     println!("Updating {}...", db_name);
-    for entry in walker(&config, &db_name) {
-        let entry = match entry {
-            Ok(_entry) => _entry,
-            Err(err) => {
-                eprintln!("failed to access entry ({})", err);
-                continue;
-            }
-        };
-        if skip != config::Skip::None || ignore_symlinks {
-            if let Some(ft) = entry.file_type() {
-                if ft.is_dir() {
-                    if skip == config::Skip::Dirs {
-                        continue;
-                    };
-                } else {
-                    if skip == config::Skip::Files {
-                        continue;
-                    };
-                }
-                if ignore_symlinks && ft.is_symlink() {
-                    continue;
-                }
-            } else {
-                continue;
-            }
-        }
-        match entry.path().to_str() {
-            Some(s) => {
-                writeln!(encoder, "{}", s)?;
-            }
-            _ => eprintln!("File name contains invalid unicode: {:?}", entry.path()),
-        }
-    }
 
-    let (_output, result) = encoder.finish();
-    result
+    let stdout_thread = thread::spawn(move || {
+        let mut encoder = EncoderBuilder::new()
+            .level(3)
+            .block_mode(lz4::BlockMode::Linked)
+            .block_size(lz4::BlockSize::Max256KB)
+            .build(output_fn)?;
+        for entry in rx {
+            match entry.path().to_str() {
+                Some(s) => {
+                    writeln!(encoder, "{}", s).unwrap();
+                }
+                _ => eprintln!("File name contains invalid unicode: {:?}", entry.path()),
+            }
+        }
+        let (_output, result) = encoder.finish();
+        result
+    });
+
+    walker(&config, &db_name).run(|| {
+        let tx = tx.clone();
+        Box::new(move |entry| { //: Result<ignore::DirEntry,ignore::Error>
+            use ignore::WalkState::*;
+            let entry = match entry {
+                    Ok(_entry) => _entry,
+                Err(err) => {
+                    eprintln!("failed to access entry ({})", err);
+                    return Continue
+                }
+            };
+            if skip != config::Skip::None || ignore_symlinks {
+                if let Some(ft) = entry.file_type() {
+                    if ft.is_dir() {
+                        if skip == config::Skip::Dirs {
+                            return Continue;
+                        };
+                    } else {
+                        if skip == config::Skip::Files {
+                            return Continue;
+                        };
+                    }
+                    if ignore_symlinks && ft.is_symlink() {
+                        return Continue;
+                    }
+                } else {
+                    return Continue;
+                }
+            }
+            match tx.send(entry) {
+                Ok(_) => ignore::WalkState::Continue,
+                Err(_) => ignore::WalkState::Quit,
+            }
+        })
+    });
+    drop(tx);
+    stdout_thread.join().unwrap()
 }
 
 fn build_regex(pattern: &str, ignore_case: bool) -> Regex {
