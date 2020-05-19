@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2020-05-19
+
+### Changed
+
+- `lookup_database`: use `bstr`'s `for_byte_line()`, leading to a ~25% performance improvement with queries on my system ([e0ab2fc](https://github.com/ngirard/lolcate-rs/commit/e0ab2fc1dbc300efaa70febe0712fd253c996273)). Thanks to [u/Freeky](https://www.reddit.com/user/Freeky) on Reddit for the suggestion.
+
+
 ## [0.7.0] - 2020-05-19
 
 ### Changed
