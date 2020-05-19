@@ -3,18 +3,18 @@
  *
  * Copyright © 2019 Nicolas Girard
  *
- * ActivityPub is free software: you can redistribute it and/or modify
+ * Lolcate is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * ActivityPub is distributed in the hope that it will be useful,
+ * Lolcate is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with ActivityPub.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Lolcate.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 use crate::config::read_toml_file;
@@ -326,7 +326,11 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
         fs::create_dir_all(parent_path)?;
     }
     let output_fn = fs::File::create(db_path)?;
-    let mut encoder = EncoderBuilder::new().level(4).build(output_fn)?;
+    let mut encoder = EncoderBuilder::new()
+        .level(3)
+        .block_mode(lz4::BlockMode::Linked)
+        .block_size(lz4::BlockSize::Max256KB)
+        .build(output_fn)?;
 
     println!("Updating {}...", db_name);
     for entry in walker(&config, &db_name) {
