@@ -18,6 +18,7 @@ exclude = [
 ]
 
 [dependencies]
+bstr = "0.2"
 clap = "2"
 crossbeam-channel = "0.4"
 dirs = "2.0"

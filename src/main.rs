@@ -19,12 +19,12 @@
 
 use crate::config::read_toml_file;
 extern crate crossbeam_channel as channel;
+use bstr::io::BufReadExt;
 use lazy_static::lazy_static;
 use lz4::EncoderBuilder;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
-use std::io::prelude::*;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process;
@@ -443,21 +443,21 @@ fn lookup_database(
     let reader = io::BufReader::new(decoder);
     let stdout = io::stdout();
     let lock = stdout.lock();
-    let mut w = io::BufWriter::new(lock);
-    for _line in reader.lines() {
-        let line = _line.unwrap();
+    let mut w = io::BufWriter::new(lock); // DEFAULT_BUF_SIZE: usize = 8 * 1024;
+    reader.for_byte_line(|_line| {
+        let line = str::from_utf8(_line).unwrap();
         if types_re.len() > 0 {
             if !types_re.iter().any(|re| re.is_match(&line)) {
-                continue;
+                return Ok(true);
             }
         }
         if !patterns_re.iter().all(|re| re.is_match(&line)) {
-            continue;
+            return Ok(true);
         }
 
         writeln!(&mut w, "{}", &line).unwrap();
-    }
-    Ok(())
+        Ok(true)
+    })
 }
 
 fn main() -> std::io::Result<()> {
