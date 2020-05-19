@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2020-05-19
+
+### Changed
+
+- Tweak the lz4 encoder parameters, resulting in a small performance improvement when updating & querying ([3cddfcb](https://github.com/ngirard/lolcate-rs/commit/3cddfcb40150ac21f42898facd282e28bf1703f0)).
+- Use multiple threads when updating databases, leading to performance improvement ([9ec023f](https://github.com/ngirard/lolcate-rs/commit/9ec023f052ea3c2bdf324cefe65c38e070d2e968))
+
 ## [0.6.1] - 2020-05-18
 
 ### Fixed
