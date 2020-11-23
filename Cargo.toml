@@ -20,8 +20,8 @@ exclude = [
 [dependencies]
 bstr = "0.2"
 clap = "2"
-crossbeam-channel = "0.4"
-dirs = "2.0"
+crossbeam-channel = "0.5"
+dirs = "3.0"
 expanduser = "1.2"
 ignore = "0.4"
 lazy_static = "1.4.0"
