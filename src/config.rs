@@ -89,7 +89,12 @@ mod deserialize {
     {
         let s = Vec::<String>::deserialize(deserializer)?;
         s.into_iter()
-            .map(|s| expanduser::expanduser(&s).map_err(serde::de::Error::custom))
+            .map(|s| {
+                #[cfg(not(windows))]
+                return expanduser::expanduser(&s).map_err(serde::de::Error::custom);
+                #[cfg(windows)]
+                return Ok(s.into());
+            })
             .collect()
     }
 }

@@ -86,7 +86,7 @@ pub fn lolcate_config_path() -> PathBuf {
 }
 
 pub fn lolcate_data_path() -> PathBuf {
-    let mut path = dirs::data_dir().unwrap();
+    let mut path = dirs::data_local_dir().unwrap();
     path.push("lolcate");
     path
 }
