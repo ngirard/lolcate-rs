@@ -33,7 +33,7 @@ jobs:
       - name: Strip binary
         run: strip 'target/${{ matrix.target }}/release/lolcate'
         if: "!contains(matrix.target, 'windows')"
-      - uses: olegtarasov/get-tag@v1
+      - uses: olegtarasov/get-tag@v2
       - name: Build package
         id: package
         shell: bash
