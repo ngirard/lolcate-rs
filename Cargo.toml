@@ -1,6 +1,6 @@
 [package]
 name = "lolcate-rs"
-version = "0.9.1"
+version = "0.9.2"
 description = "A comically fast way of indexing and querying your filesystem. Replaces locate / mlocate / updatedb."
 documentation = "https://github.com/ngirard/lolcate-rs/blob/master/README.md"
 readme = "README.md"
