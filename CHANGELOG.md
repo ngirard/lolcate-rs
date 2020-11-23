@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2020-11-23
+
+### Added
+
+- Added support for Windows ([PR #25](https://github.com/ngirard/lolcate-rs/pull/25), thanks to [Malloc Voidstar](https://github.com/AlyoshaVasilieva)).
+
 ## [0.8.0] - 2020-05-19
 
 ### Changed

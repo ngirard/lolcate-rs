@@ -262,7 +262,7 @@ This is the easiest and recommended way.
 
 Download the latest `lolcate` pre-compiled binary from [Github](https://github.com/ngirard/lolcate-rs/releases) into a directory belonging to your `PATH`.
 
-Pre-compiled binaries are currently only available for Linux and MacOS.
+Pre-compiled binaries are available for Linux, MacOS and Windows.
 
 ## Installation from sources
 
