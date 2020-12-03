@@ -454,8 +454,11 @@ fn lookup_database(
         if !patterns_re.iter().all(|re| re.is_match(&line)) {
             return Ok(true);
         }
-
-        writeln!(&mut w, "{}", &line).unwrap();
+        #[allow(unused_must_use)]
+        {
+            w.write_all(&line.as_bytes());
+            w.write_all(b"\n");
+        }
         Ok(true)
     })
 }
