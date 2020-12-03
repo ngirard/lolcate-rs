@@ -8,7 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Fixed
 
-- Fix panic on broken pipe ([#26](https://github.com/ngirard/lolcate-rs/issue/26)).
+- Fix panic on broken pipe ([#26](https://github.com/ngirard/lolcate-rs/issues/26)).
 
 ## [0.9.2] - 2020-11-23
 
