@@ -341,9 +341,10 @@ fn update_database(db_name: &str) -> std::io::Result<()> {
             .build(output_fn)?;
         for entry in rx {
             match entry.path().to_str() {
-                Some(s) => {
+                Some(s) if !s.contains('\n') => {
                     writeln!(encoder, "{}", s).unwrap();
                 }
+                Some(_) => eprintln!("File name contains newline: {:?}", entry.path()),
                 _ => eprintln!("File name contains invalid unicode: {:?}", entry.path()),
             }
         }
