@@ -316,7 +316,7 @@ fn update_databases(databases: Vec<String>) -> std::io::Result<()> {
 fn update_database(db_name: &str) -> std::io::Result<()> {
     let config_fn = config_fn(&db_name);
     if !config_fn.exists() {
-        eprintln!("Config file not found for database {}.\nPerhaps you forgot to run lolcate --create {} ?", &db_name, &db_name);
+        eprintln!("Config file not found for database {}.\nPerhaps you forgot to run lolcate --create --db {} ?", &db_name, &db_name);
         process::exit(1);
     }
     let config = get_db_config(&config_fn);
@@ -426,7 +426,7 @@ fn lookup_database(
     let db_file = db_fn(&db_name);
     if !db_file.parent().unwrap().exists() {
         eprintln!(
-            "Database {} doesn't exist. Perhaps you forgot to run lolcate --create {} ?",
+            "Database {} doesn't exist. Perhaps you forgot to run lolcate --create --db {} ?",
             &db_name, &db_name
         );
         process::exit(1);
